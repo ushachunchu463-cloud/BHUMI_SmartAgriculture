@@ -1972,7 +1972,8 @@ def get_live_crop_price(crop_name, state, district):
             f"&filters[State.Keyword]={state}"
             f"&filters[Commodity]={agmark_name}"
         )
-        resp    = requests.get(url, timeout=10)
+        resp    = requests.get(url, timeout=4
+                               )
         data    = resp.json()
         records = data.get('records', [])
 
@@ -2469,7 +2470,8 @@ def get_mandi_prices_for_district(crop_name, state, district):
             f"&filters[commodity]={agmark_name}"
         )
         print(f"🔍 Mandi URL: {url}")
-        resp    = requests.get(url, timeout=8)
+        resp    = requests.get(url, timeout=4
+                               )
         data    = resp.json()
         records = data.get('records', [])
         if not records:
