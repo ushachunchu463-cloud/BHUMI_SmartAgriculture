@@ -4195,7 +4195,7 @@ def api_nearest_mandi(crop, state, district):
                     f"&filters[commodity]={agmark_name}"
                     f"&filters[state.keyword]={ns}"
                 )
-                r2 = req.get(url2, timeout=3).json().get('records', [])
+                r2 = req.get(url2, headers=DATAGOV_HEADERS, timeout=3).json().get('records', [])
                 records += r2
                 print(f"➕ {ns}: {len(r2)} records")
             except:
@@ -4210,7 +4210,7 @@ def api_nearest_mandi(crop, state, district):
                 f"?api-key={DATAGOV_KEY}&format=json&limit=30"
                 f"&filters[commodity]={agmark_name}"
             )
-            records = req.get(url3, timeout=3).json().get('records', [])
+            records = req.get(url3, headers=DATAGOV_HEADERS,timeout=3).json().get('records', [])
             print(f"🌍 All India fallback: {len(records)}")
         except:
             pass
