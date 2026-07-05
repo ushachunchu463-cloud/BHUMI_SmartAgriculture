@@ -9,7 +9,9 @@ from datetime import datetime, timedelta
 import os, json, random, string, io, base64, smtplib, threading, math, time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
+DATAGOV_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'bhumismarthagri2024secretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///smart_agriculture.db'
@@ -101,7 +103,7 @@ def get_live_crop_price(crop_name, state, district):
             f"?api-key={DATAGOV_KEY}&format=json&limit=5"
             f"&filters[commodity]={agmark_name}"
         )
-        resp    = requests.get(url, timeout=3)
+        resp    = requests.get(url, headers=DATAGOV_HEADERS, timeout=6)
         data    = resp.json()
         records = data.get('records', [])
         if records:
@@ -1972,9 +1974,8 @@ def get_live_crop_price(crop_name, state, district):
             f"&filters[State.Keyword]={state}"
             f"&filters[Commodity]={agmark_name}"
         )
-        resp    = requests.get(url, timeout=3
+        resp    = requests.get(url,headers=DATAGOV_HEADERS,timeout=3)
                                
-                               )
         data    = resp.json()
         records = data.get('records', [])
 
@@ -2471,8 +2472,8 @@ def get_mandi_prices_for_district(crop_name, state, district):
             f"&filters[commodity]={agmark_name}"
         )
         print(f"🔍 Mandi URL: {url}")
-        resp    = requests.get(url, timeout=4
-                               )
+        resp    = requests.get(url,headers=DATAGOV_HEADERS,timeout=3)
+
         data    = resp.json()
         records = data.get('records', [])
         if not records:
@@ -4176,7 +4177,7 @@ def api_nearest_mandi(crop, state, district):
             f"&filters[commodity]={agmark_name}"
             f"&filters[state.keyword]={state}"
         )
-        resp    = req.get(url, timeout=3
+        resp    = req.get(url, headers=DATAGOV_HEADERS,timeout=3 
                           )
         records = resp.json().get('records', [])
         print(f"✅ {state} records: {len(records)}")
