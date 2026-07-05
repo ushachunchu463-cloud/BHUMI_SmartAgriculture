@@ -101,7 +101,7 @@ def get_live_crop_price(crop_name, state, district):
             f"?api-key={DATAGOV_KEY}&format=json&limit=5"
             f"&filters[commodity]={agmark_name}"
         )
-        resp    = requests.get(url, timeout=6)
+        resp    = requests.get(url, timeout=3)
         data    = resp.json()
         records = data.get('records', [])
         if records:
@@ -1972,7 +1972,8 @@ def get_live_crop_price(crop_name, state, district):
             f"&filters[State.Keyword]={state}"
             f"&filters[Commodity]={agmark_name}"
         )
-        resp    = requests.get(url, timeout=4
+        resp    = requests.get(url, timeout=3
+                               
                                )
         data    = resp.json()
         records = data.get('records', [])
@@ -4175,7 +4176,8 @@ def api_nearest_mandi(crop, state, district):
             f"&filters[commodity]={agmark_name}"
             f"&filters[state.keyword]={state}"
         )
-        resp    = req.get(url, timeout=8)
+        resp    = req.get(url, timeout=3
+                          )
         records = resp.json().get('records', [])
         print(f"✅ {state} records: {len(records)}")
     except Exception as e:
@@ -4192,7 +4194,7 @@ def api_nearest_mandi(crop, state, district):
                     f"&filters[commodity]={agmark_name}"
                     f"&filters[state.keyword]={ns}"
                 )
-                r2 = req.get(url2, timeout=8).json().get('records', [])
+                r2 = req.get(url2, timeout=3).json().get('records', [])
                 records += r2
                 print(f"➕ {ns}: {len(r2)} records")
             except:
@@ -4207,7 +4209,7 @@ def api_nearest_mandi(crop, state, district):
                 f"?api-key={DATAGOV_KEY}&format=json&limit=30"
                 f"&filters[commodity]={agmark_name}"
             )
-            records = req.get(url3, timeout=8).json().get('records', [])
+            records = req.get(url3, timeout=3).json().get('records', [])
             print(f"🌍 All India fallback: {len(records)}")
         except:
             pass
