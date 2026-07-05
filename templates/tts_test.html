@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>TTS Test</title></head>
+<body>
+<h2>TTS Test Page</h2>
+<p>Click each button and check if audio plays:</p>
+
+<button onclick="test1()">Test 1: Direct Audio URL (Telugu)</button><br><br>
+<button onclick="test2()">Test 2: Direct Audio URL (Hindi)</button><br><br>
+<button onclick="test3()">Test 3: Direct Audio URL (English)</button><br><br>
+
+<div id="log" style="background:#f0f0f0;padding:15px;margin-top:20px;font-family:monospace;white-space:pre;"></div>
+
+<script>
+function log(msg) {
+  document.getElementById('log').textContent += msg + '\n';
+  console.log(msg);
+}
+
+function test1() {
+  log('Testing Telugu...');
+  const url = '/api/tts?lang=te&text=' + encodeURIComponent('నమస్కారం రైతు అన్నా');
+  log('URL: ' + url);
+  const a = new Audio(url);
+  a.addEventListener('canplaythrough', () => { log('✅ Audio loaded! Playing...'); a.play(); });
+  a.addEventListener('error', (e) => { log('❌ Error: ' + JSON.stringify(e.target.error)); });
+  a.load();
+}
+
+function test2() {
+  log('Testing Hindi...');
+  const url = '/api/tts?lang=hi&text=' + encodeURIComponent('नमस्कार किसान भाई');
+  const a = new Audio(url);
+  a.addEventListener('canplaythrough', () => { log('✅ Audio loaded! Playing...'); a.play(); });
+  a.addEventListener('error', (e) => { log('❌ Error: ' + JSON.stringify(e.target.error)); });
+  a.load();
+}
+
+function test3() {
+  log('Testing English...');
+  const url = '/api/tts?lang=en&text=' + encodeURIComponent('Hello farmer welcome');
+  const a = new Audio(url);
+  a.addEventListener('canplaythrough', () => { log('✅ Audio loaded! Playing...'); a.play(); });
+  a.addEventListener('error', (e) => { log('❌ Error: ' + JSON.stringify(e.target.error)); });
+  a.load();
+}
+</script>
+</body>
+</html>

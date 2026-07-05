@@ -1,0 +1,986 @@
+{% extends "base.html" %}
+{% block title %}🌱 {{ t('crop_ideas') }}{% endblock %}
+{% block content %}
+<style>
+:root{--green:#2d6a4f;--light-green:#52b788;--yellow:#f4a261;--red:#e63946;--blue:#4895ef;--card-shadow:0 4px 20px rgba(0,0,0,0.08);}
+body{background:#f8fdf8;}
+.hero-banner{background:linear-gradient(135deg,#1b4332,#2d6a4f,#40916c);color:#fff;border-radius:20px;padding:35px;margin-bottom:30px;position:relative;overflow:hidden;}
+.hero-banner::before{content:'🌾';position:absolute;right:20px;top:10px;font-size:100px;opacity:0.15;}
+.card-modern{border:none;border-radius:16px;box-shadow:var(--card-shadow);margin-bottom:24px;overflow:hidden;transition:transform .2s;}
+.card-modern:hover{transform:translateY(-2px);}
+.section-title{font-size:1.1rem;font-weight:700;color:var(--green);border-left:4px solid var(--light-green);padding-left:12px;margin-bottom:16px;}
+.weather-card{background:linear-gradient(135deg,#4895ef,#4361ee);color:#fff;border-radius:16px;padding:20px;margin-bottom:24px;}
+.weather-item{text-align:center;padding:10px;}
+.weather-val{font-size:1.6rem;font-weight:800;}
+.weather-lbl{font-size:0.75rem;opacity:0.85;margin-top:2px;}
+.drought-alert{background:#fff3cd;border-left:5px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:20px;}
+.drought-alert.danger{background:#f8d7da;border-color:var(--red);}
+.top-pick{background:linear-gradient(135deg,#1b4332,#40916c);color:#fff;border-radius:16px;padding:24px;margin-bottom:24px;position:relative;}
+.top-pick .badge-top{background:gold;color:#333;font-weight:800;padding:5px 14px;border-radius:20px;font-size:0.8rem;}
+.crop-card{border:2px solid #e8f5e9;border-radius:14px;padding:16px;margin-bottom:14px;background:#fff;transition:all .2s;cursor:pointer;}
+.crop-card:hover{border-color:var(--light-green);box-shadow:0 4px 15px rgba(45,106,79,0.15);}
+.crop-card.not-seasonal{opacity:0.65;border-style:dashed;}
+.risk-bar{height:8px;border-radius:4px;background:#e9ecef;overflow:hidden;margin-top:4px;}
+.risk-fill{height:100%;border-radius:4px;transition:width .5s;}
+.profit-chip{background:#e8f5e9;color:var(--green);font-weight:700;padding:4px 10px;border-radius:20px;font-size:0.8rem;}
+.loss-chip{background:#fdecea;color:var(--red);font-weight:700;padding:4px 10px;border-radius:20px;font-size:0.8rem;}
+.water-icon{font-size:0.75rem;color:#4895ef;}
+.calendar-box{background:#f0fff4;border:1px solid #b7e4c7;border-radius:12px;padding:14px;margin-top:10px;display:none;}
+.calendar-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #d8f3dc;font-size:0.82rem;}
+.calendar-row:last-child{border-bottom:none;}
+.calendar-row span:first-child{color:#666;font-weight:500;}
+.calendar-row span:last-child{color:var(--green);font-weight:700;}
+.soil-health-card{background:#fffbf0;border-left:4px solid var(--yellow);border-radius:12px;padding:18px;}
+.rotation-badge{background:#e3f2fd;color:#1565c0;font-size:0.78rem;padding:4px 10px;border-radius:20px;margin:3px;}
+.story-card{background:linear-gradient(135deg,#fff9c4,#fffde7);border:2px solid #f9a825;border-radius:14px;padding:18px;}
+.alt-crop-chip{background:#e8f5e9;color:var(--green);padding:6px 14px;border-radius:20px;font-size:0.85rem;font-weight:600;display:inline-block;margin:4px;cursor:pointer;border:2px solid transparent;}
+.alt-crop-chip:hover{border-color:var(--green);}
+.compare-table{width:100%;border-collapse:separate;border-spacing:0 8px;}
+.compare-table th{background:var(--green);color:#fff;padding:10px 14px;font-size:0.85rem;}
+.compare-table td{background:#fff;padding:10px 14px;font-size:0.85rem;border-top:1px solid #e8f5e9;border-bottom:1px solid #e8f5e9;}
+.compare-table td:first-child{border-left:1px solid #e8f5e9;border-radius:8px 0 0 8px;}
+.compare-table td:last-child{border-right:1px solid #e8f5e9;border-radius:0 8px 8px 0;}
+.tab-btn{border:none;background:none;padding:10px 20px;font-weight:600;color:#666;border-bottom:3px solid transparent;cursor:pointer;transition:all .2s;}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green);}
+.category-tabs{border-bottom:2px solid #e8f5e9;margin-bottom:20px;}
+.voice-btn{background:linear-gradient(135deg,#e040fb,#7b1fa2);color:#fff;border:none;border-radius:25px;padding:10px 20px;font-weight:700;cursor:pointer;transition:all .2s;}
+.voice-btn:hover{transform:scale(1.05);}
+.expert-card{background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:14px;padding:20px;}
+.form-label{font-weight:600;color:#444;font-size:0.9rem;}
+.form-control,.form-select{border-radius:10px;border:2px solid #e8f5e9;padding:10px 14px;}
+.form-control:focus,.form-select:focus{border-color:var(--light-green);box-shadow:0 0 0 3px rgba(82,183,136,0.2);}
+.btn-analyze{background:linear-gradient(135deg,#2d6a4f,#40916c);color:#fff;border:none;border-radius:12px;padding:14px 40px;font-size:1.1rem;font-weight:700;width:100%;cursor:pointer;transition:all .2s;}
+.btn-analyze:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,106,79,0.4);}
+.health-score-ring{width:80px;height:80px;position:relative;display:inline-block;}
+.health-score-ring svg{transform:rotate(-90deg);}
+.health-score-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:800;font-size:1.1rem;color:var(--green);}
+
+/* ══════════════════════════════════════════
+   LIVE WEATHER WIDGET — NEW STYLES
+══════════════════════════════════════════ */
+.lw-widget{
+  display:none;
+  border-radius:16px;
+  overflow:hidden;
+  margin-top:16px;
+  animation:lwSlideIn .35s ease;
+}
+@keyframes lwSlideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.lw-widget.lw-show{display:block;}
+.lw-widget.lw-normal {background:linear-gradient(135deg,#1565c0,#1976d2);}
+.lw-widget.lw-hot    {background:linear-gradient(135deg,#bf360c,#e64a19);}
+.lw-widget.lw-drought{background:linear-gradient(135deg,#7f1d1d,#b91c1c);}
+.lw-widget.lw-rain   {background:linear-gradient(135deg,#1a237e,#283593);}
+.lw-widget.lw-cool   {background:linear-gradient(135deg,#004d40,#00796b);}
+.lw-main{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:14px;padding:18px 22px 14px;color:#fff;
+}
+.lw-left{display:flex;align-items:center;gap:14px;}
+.lw-big-icon{font-size:46px;line-height:1;}
+.lw-temp-big{font-size:50px;font-weight:300;color:#fff;line-height:1;}
+.lw-info-block{}
+.lw-location{font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;}
+.lw-desc{font-size:12px;color:rgba(255,255,255,.75);}
+.lw-live-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.15);border-radius:20px;
+  padding:3px 10px;font-size:11px;color:#fff;font-weight:500;margin-top:6px;
+}
+.lw-pulse{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:lwblink 2s infinite;}
+@keyframes lwblink{0%,100%{opacity:1}50%{opacity:.2}}
+.lw-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.lw-stat{background:rgba(255,255,255,.13);border-radius:12px;padding:10px 6px;text-align:center;min-width:68px;}
+.lw-stat-val{font-size:14px;font-weight:700;color:#fff;line-height:1.1;}
+.lw-stat-lbl{font-size:10px;color:rgba(255,255,255,.7);margin-top:2px;text-transform:uppercase;letter-spacing:.03em;}
+.lw-alert-strip{
+  background:rgba(0,0,0,.22);padding:9px 22px;
+  font-size:12px;font-weight:600;color:#fff;
+  display:flex;align-items:center;gap:8px;
+}
+.lw-agri-row{
+  background:rgba(0,0,0,.16);padding:9px 22px;
+  display:flex;flex-wrap:wrap;gap:7px;
+}
+.lw-agri-chip{
+  background:rgba(255,255,255,.12);border-radius:20px;
+  padding:4px 12px;font-size:11px;color:#fff;font-weight:500;
+}
+.lw-agri-chip.good{background:rgba(74,222,128,.22);}
+.lw-agri-chip.warn{background:rgba(251,191,36,.22);}
+.lw-agri-chip.bad {background:rgba(248,113,113,.22);}
+.lw-bottom{
+  background:rgba(0,0,0,.18);padding:0;
+}
+.lw-countdown-bar{width:100%;height:3px;background:rgba(255,255,255,.12);}
+.lw-countdown-fill{height:100%;background:rgba(255,255,255,.55);transition:width .1s linear;}
+.lw-footer{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 18px;font-size:10px;color:rgba(255,255,255,.5);
+}
+/* skeleton shimmer */
+.lw-shimmer{
+  background:rgba(255,255,255,.18);border-radius:6px;
+  animation:lwpulse 1.2s infinite;
+}
+@keyframes lwpulse{0%,100%{opacity:.35}50%{opacity:.75}}
+</style>
+
+<!-- HERO -->
+<div class="hero-banner">
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <h2 class="fw-800 mb-1">🌱 {{ t('crop_ideas') }}</h2>
+      <p class="mb-0 opacity-85">AI-powered crop recommendations with weather, profit &amp; risk analysis</p>
+    </div>
+    <div class="col-md-4 text-end">
+      {% if result %}
+      <button class="voice-btn" onclick="speakResult()">{{ t('voice_guidance') }}</button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- INPUT FORM -->
+<div class="card-modern">
+  <div class="card-body p-4">
+    <h5 class="section-title">{{ t('enter_farm_details') }}</h5>
+    <form method="POST" enctype="multipart/form-data">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">🏛️ {{ t('select_state') }}</label>
+          <select name="state" id="stateSelect" class="form-select" required onchange="loadDistricts(this.value)">
+            <option value="">{{ t('select_state') }}</option>
+            {% for s in states %}<option value="{{s}}" {% if result and result.state==s %}selected{% endif %}>{{states_display[s] if states_display and s in states_display else s}}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">📍 {{ t('select_district') }}</label>
+          <select name="district" class="form-select" id="districtSelect" required onchange="onDistrictChange()">
+            <option value="">{{ t('select_district') }}</option>
+            {% if result %}
+            {% for d in districts.get(result.state,[]) %}<option value="{{d}}" {% if d==result.district %}selected{% endif %}>{{districts_display[d] if districts_display and d in districts_display else d}}</option>{% endfor %}
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">🌤️ {{ t('select_season') }}</label>
+          <select name="season" class="form-select" required>
+            <option value="">{{ t('select_season') }}</option>
+            <option value="kharif" {% if result and 'kharif' in result.season.lower() %}selected{% endif %}>{{ t('kharif') }}</option>
+            <option value="rabi"   {% if result and 'rabi'   in result.season.lower() %}selected{% endif %}>{{ t('rabi') }}</option>
+            <option value="zaid"   {% if result and 'zaid'   in result.season.lower() %}selected{% endif %}>{{ t('zaid') }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">{{ t('farm_size') }}</label>
+          <input type="number" name="acres" class="form-control" value="{{result.acres if result else 1}}" min="0.5" max="100" step="0.5">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">{{ t('soil_image') }}</label>
+          <input type="file" name="soil_image" class="form-control" accept="image/*" {% if not result %}required{% endif %}>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button type="submit" class="btn-analyze">{{ t('analyze_btn') }}</button>
+      </div>
+    </form>
+
+    <!-- ══════════════════════════════════════════
+         LIVE WEATHER WIDGET — appears on district select
+    ══════════════════════════════════════════ -->
+    <div id="lwWidget" class="lw-widget lw-normal">
+      <div class="lw-main" id="lwMain">
+        <!-- skeleton shown while loading -->
+        <div class="lw-left">
+          <div class="lw-shimmer" style="width:46px;height:46px;border-radius:50%;"></div>
+          <div>
+            <div class="lw-shimmer" style="width:130px;height:15px;margin-bottom:7px;"></div>
+            <div class="lw-shimmer" style="width:90px;height:11px;"></div>
+          </div>
+        </div>
+        <div class="lw-stats">
+          {% for lbl in ['Humidity','Wind','Rain','Drought'] %}
+          <div class="lw-stat">
+            <div class="lw-shimmer" style="width:40px;height:14px;margin:0 auto 4px;"></div>
+            <div class="lw-stat-lbl">{{lbl}}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div id="lwAlertStrip" class="lw-alert-strip" style="display:none;"></div>
+      <div id="lwAgriRow"    class="lw-agri-row"    style="display:none;"></div>
+      <div class="lw-bottom">
+        <div class="lw-countdown-bar"><div class="lw-countdown-fill" id="lwCountdownFill" style="width:100%;"></div></div>
+        <div class="lw-footer">
+          <span id="lwUpdated">Connecting to live weather...</span>
+          <span id="lwCountdownLabel"></span>
+        </div>
+      </div>
+    </div>
+    <!-- END LIVE WEATHER WIDGET -->
+
+  </div>
+</div>
+
+{% if result %}
+
+
+<!-- TOP RECOMMENDATION -->
+{% if result.top_crop %}
+<div class="card-modern mb-4" id="mandiPriceCard">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="section-title mb-0">
+        🏪 Live Mandi Prices —
+        <span id="mandiCropName">{{ translate_crop(result.top_crop.name) }}</span>
+      </h5>
+      <div>
+        <span id="mandiLiveBadge"
+              style="background:#dc3545;color:#fff;padding:3px 12px;
+                     border-radius:20px;font-size:0.75rem;font-weight:600;">
+          🔴 Live
+        </span>
+        <span class="text-muted small ms-2" id="mandiUpdatedTime"></span>
+      </div>
+    </div>
+
+    <div id="mandiLoading" class="text-center py-3">
+      <div class="spinner-border text-success spinner-border-sm me-2"></div>
+      <span class="text-muted">Fetching live mandi prices...</span>
+    </div>
+
+    <div id="mandiNoData" style="display:none;" class="text-center py-3 text-muted">
+      <div style="font-size:2rem;">📊</div>
+      <p class="mb-0">No mandi data available for today.</p>
+      <small>Try again tomorrow or check Agmarknet directly.</small>
+    </div>
+
+    <div id="mandiTable" style="display:none;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-2" style="font-size:0.88rem;">
+          <thead style="background:#f0fff4;">
+            <tr>
+              <th style="color:#2d6a4f;">🏪 Mandi</th>
+              <th style="color:#2d6a4f;">📍 District </th>
+              <th style="color:#2d6a4f;">📉 Min</th>
+              <th style="color:#2d6a4f;">💰 Modal</th>
+              <th style="color:#2d6a4f;">📈 Max</th>
+              <th style="color:#2d6a4f;">📅 Date</th>
+            </tr>
+          </thead>
+          <tbody id="mandiTableBody"></tbody>
+        </table>
+      </div>
+      <div id="bestMandiAlert"
+           style="background:#e8f5e9;border-left:4px solid #2d6a4f;
+                  border-radius:0 10px 10px 0;padding:12px 16px;display:none;">
+      </div>
+    </div>
+
+    <div class="mt-3 d-flex flex-wrap gap-2" id="mandiCropBtns">
+      {% for crop in result.district_crops[:6] %}
+      <button onclick="loadMandiPrices('{{ crop }}')"
+              class="btn btn-sm btn-outline-success rounded-pill"
+              id="mandiBtn-{{ crop|replace(' ','-') }}">
+        {{ translate_crop(crop) }}
+      </button>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+{% endif %}
+{% if result.top_crop %}
+<div class="top-pick mb-4">
+  <div class="d-flex justify-content-between align-items-start mb-2">
+  <span class="badge-top">⭐ {{ t('top_recommendation') }}</span>
+  <span style="font-size:0.8rem;opacity:0.8;">{{ t('real_recommendation') if t('real_recommendation') != 'real_recommendation' else t('based_on_ai') }}</span>
+  </div>
+  <h3 class="fw-800 mt-2 mb-1">🌿 {{translate_crop(result.top_crop.name)}}</h3>
+  <div class="row mt-3">
+    <div class="col-4 text-center">
+      <div style="font-size:1.4rem;font-weight:800;">
+        {% if result.top_crop.profit %}₹{{"{:,}".format(result.top_crop.profit.profit|int)}}{% else %}—{% endif %}
+      </div>
+      <div style="font-size:0.75rem;opacity:0.85;">{{ t('est_profit') }}</div>
+    </div>
+    <div class="col-4 text-center">
+      <div style="font-size:1.4rem;font-weight:800;">{{result.top_crop.risk}}%</div>
+      <div style="font-size:0.75rem;opacity:0.85;">{{ t('risk_score') }}</div>
+    </div>
+    <div class="col-4 text-center">
+      <div style="font-size:1.4rem;font-weight:800;">{{result.top_crop.water}}</div>
+      <div style="font-size:0.75rem;opacity:0.85;">💧 {{ t('water_need') }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<!-- SOIL INFO -->
+<div class="card-modern">
+  <div class="card-body p-4">
+    <div class="row align-items-center">
+      <div class="col-md-2 text-center">
+        <div class="health-score-ring">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="34" fill="none" stroke="#e8f5e9" stroke-width="8"/>
+            <circle cx="40" cy="40" r="34" fill="none" stroke="#2d6a4f" stroke-width="8"
+              stroke-dasharray="{{result.health_score * 21.4}} 214" stroke-linecap="round"/>
+          </svg>
+          <div class="health-score-text">{{result.health_score}}</div>
+        </div>
+        <div style="font-size:0.75rem;color:#666;margin-top:4px;">{{ t('health_score_lbl') }}</div>
+      </div>
+      <div class="col-md-5">
+        <h5 class="fw-700 text-success">🌍 {{result.soil_type}}</h5>
+        <p class="text-muted small mb-2">{{result.features}}</p>
+        <div class="row g-2">
+          <div class="col-6"><span class="badge bg-light text-dark">N: {{result.nitrogen}}</span></div>
+          <div class="col-6"><span class="badge bg-light text-dark">P: {{result.phosphorus}}</span></div>
+          <div class="col-6"><span class="badge bg-light text-dark">K: {{result.potassium}}</span></div>
+          <div class="col-6"><span class="badge bg-light text-dark">pH: {{result.ph}}</span></div>
+          <div class="col-12 mt-2">
+            <div style="background:#fff8e1;border-left:3px solid #f4a261;border-radius:0 8px 8px 0;padding:8px 12px;">
+              <small style="font-size:0.72rem;color:#8b5e2a;">
+               {{ t('soil_test_note') if t('soil_test_note') != 'soil_test_note' else '* These are typical ranges. Get FREE exact soil test at your nearest Krishi Vigyan Kendra — Call 1800-180-1551' }}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <img src="{{url_for('static',filename='uploads/'+result.image)}}" class="img-fluid rounded-3" style="max-height:140px;width:100%;object-fit:cover;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE -->
+<div class="mb-3 text-end">
+  <button class="btn btn-outline-success btn-sm rounded-pill fw-600" onclick="showCompare()">{{ t('compare_crops') }}</button>
+</div>
+<div id="compareSection" class="card-modern" style="display:none;">
+  <div class="card-body p-4">
+    <h5 class="section-title">{{ t('compare_table') }}</h5>
+    <div class="table-responsive">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Crop</th>
+            <th>{{ t('investment') }}</th>
+            <th>{{ t('revenue') }}</th>
+            <th>{{ t('profit_acre') }}</th>
+            <th>💧 {{ t('water_need') }}</th>
+            <th>{{ t('risk_score') }}</th>
+            <th>{{ t('season_ok') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cat, crops in result.crops.items() %}
+          {% for c in crops %}
+          <tr>
+            <td><strong>{{translate_crop(c.name)}}</strong></td>
+            <td>{% if c.profit %}₹{{"{:,}".format(c.profit.cost|int)}}{% else %}—{% endif %}</td>
+            <td>{% if c.profit %}₹{{"{:,}".format(c.profit.revenue|int)}}{% else %}—{% endif %}</td>
+            <td>{% if c.profit %}<span class="{% if c.profit.profit > 0 %}profit-chip{% else %}loss-chip{% endif %}">₹{{"{:,}".format(c.profit.profit|int)}}</span>{% else %}—{% endif %}</td>
+            <td>{{c.water}}</td>
+            <td><span class="badge bg-{{c.risk_color}}">{{c.risk}}% {{c.risk_label}}</span></td>
+            <td>{% if c.seasonal_ok %}✅{% else %}❌{% endif %}</td>
+          </tr>
+          {% endfor %}{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CROP RECOMMENDATIONS -->
+<div class="card-modern">
+  <div class="card-body p-4">
+    <h5 class="section-title">🌾 {{ t('recommended_crops_for') }} {{result.soil_type}}</h5>
+    <div class="category-tabs">
+      <button class="tab-btn active" onclick="showCat('vegetables',this)">🥦 {{ t('vegetables') }}</button>
+      <button class="tab-btn" onclick="showCat('fruits',this)">🍎 {{ t('fruits') }}</button>
+      <button class="tab-btn" onclick="showCat('flowers',this)">🌸 {{ t('flowers') }}</button>
+      <button class="tab-btn" onclick="showCat('indoor',this)">🪴 {{ t('indoor_plants') }}</button>
+    </div>
+    {% for cat, crops in result.crops.items() %}
+    <div id="cat-{{cat}}" class="cat-section" {% if not loop.first %}style="display:none"{% endif %}>
+      {% for c in crops %}
+      <div class="crop-card {% if not c.seasonal_ok %}not-seasonal{% endif %}" onclick="toggleCalendar('cal-{{c.name|replace(' ','-')}}')">
+        <div class="row align-items-center">
+          <div class="col-md-3">
+            <strong>{{translate_crop(c.name)}}</strong>
+            {% if not c.seasonal_ok %}<span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">{{ t('off_season') }}</span>{% endif %}
+            {% if c.drought_ok and result.drought_mode %}<span class="badge bg-info ms-1" style="font-size:0.65rem;">{{ t('drought_ok') }}</span>{% endif %}
+            <div class="text-muted small mt-1">💰 {{c.price}} &nbsp;|&nbsp;<span class="water-icon">{% for i in range(1 if c.water=='Low' else (2 if c.water=='Medium' else 3)) %}💧{% endfor %}</span></div>
+          </div>
+          <div class="col-md-3">
+            <div class="small text-muted mb-1">{{ t('ai_risk_score') }}</div>
+            <div class="risk-bar"><div class="risk-fill bg-{{c.risk_color}}" style="width:{{c.risk}}%"></div></div>
+            <div class="small fw-600 text-{{c.risk_color}} mt-1">{{c.risk}}% — {{c.risk_label}}</div>
+          </div>
+          <div class="col-md-3">
+            {% if c.profit %}
+            <div class="small text-muted">{{ t('est_profit') }} ({{result.acres}} acre)</div>
+            <span class="{% if c.profit.profit > 0 %}profit-chip{% else %}loss-chip{% endif %}">₹{{"{:,}".format((c.profit.profit * result.acres)|int)}}</span>
+            <div class="small text-muted mt-1">{{ t('investment') }}: ₹{{"{:,}".format((c.profit.cost * result.acres)|int)}}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-3 text-end">
+            <span class="badge bg-{% if c.demand=='high' %}success{% elif c.demand=='medium' %}warning{% else %}secondary{% endif %}">
+              {% if c.demand=='high' %}{{ t('high') }}{% elif c.demand=='medium' %}{{ t('medium') }}{% else %}{{ t('low') }}{% endif %} {{ t('market_demand') }}
+            </span>
+            {% if c.calendar %}<div class="small text-muted mt-2">{{ t('click_calendar') }}</div>{% endif %}
+          </div>
+        </div>
+        {% if c.calendar %}
+        <div class="calendar-box" id="cal-{{c.name|replace(' ','-')}}">
+          <div class="fw-700 mb-2" style="color:var(--green);">{{ t('farming_calendar') }} — {{translate_crop(c.name)}}</div>
+          {% for key, val in c.calendar.items() %}
+          <div class="calendar-row"><span>{{key|replace('_',' ')|capitalize}}</span><span>{{val}}</span></div>
+          {% endfor %}
+          <div class="mt-2 text-center">
+            <a href="{{url_for('generate_crop_calendar', crop=c.name, season=result.season, analysis_id=result.analysis_id)}}"
+               class="btn btn-sm btn-success rounded-pill" onclick="event.stopPropagation()">{{ t('download_pdf_cal') }}</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if result.soil_health %}
+<div class="card-modern">
+  <div class="card-body p-4">
+    <h5 class="section-title">{{ t('soil_health_plan') }}</h5>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="soil-health-card h-100">
+          <h6 class="fw-700 mb-2">{{ t('req_fertilizers') }}</h6>
+          {% for f in result.soil_health.get('fertilizers',[]) %}<div class="d-flex align-items-center mb-2"><span class="me-2">•</span><span class="small">{{f}}</span></div>{% endfor %}
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="soil-health-card h-100" style="border-color:#81c784;">
+          <h6 class="fw-700 mb-2">{{ t('organic_compost') }}</h6>
+          {% for o in result.soil_health.get('organic',[]) %}<div class="d-flex align-items-center mb-2"><span class="me-2">🌱</span><span class="small">{{o}}</span></div>{% endfor %}
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="soil-health-card h-100" style="border-color:#64b5f6;">
+          <h6 class="fw-700 mb-2">{{ t('crop_rotation') }}</h6>
+          {% for r in result.soil_health.get('rotation',[]) %}<span class="rotation-badge">{{r}}</span>{% endfor %}
+          <p class="small text-muted mt-2 mb-0">{{result.soil_health.get('rotation_tip','')}}</p>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="alert alert-success border-0 rounded-3 py-2 mb-0">
+          <strong>{{ t('green_manure') }}:</strong> {{result.soil_health.get('green_manure','')}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% if result.district_crops %}
+<div class="card-modern">
+  <div class="card-body p-4">
+    <h5 class="section-title">
+      🌾 {{ t('district_crops_title') }} — {{ result.district_display }}
+    </h5>
+    <div class="row g-3 mb-3">
+      {% for dc in result.district_crops_prices %}
+      <div class="col-6 col-md-4">
+        <div style="background:#f0fff4;border:1.5px solid #b7e4c7;border-radius:12px;padding:12px 14px;">
+          <div class="fw-700" style="color:#2d6a4f;font-size:0.95rem;">
+            ✅ {{ translate_crop(dc.name) }}
+          </div>
+          {% if dc.price %}
+          <div class="mt-1" style="font-size:0.85rem;color:#444;">
+            💰 ₹{{ dc.price }}/kg
+            {% if dc.is_live %}
+            <span style="background:#dc3545;color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:10px;margin-left:4px;">🔴 Live</span>
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="mt-1">
+            <span class="badge bg-{% if dc.demand=='high' %}success{% elif dc.demand=='medium' %}warning{% else %}secondary{% endif %}" style="font-size:0.65rem;">
+              {% if dc.demand=='high' %}{{ t('high') }}{% elif dc.demand=='medium' %}{{ t('medium') }}{% else %}{{ t('low') }}{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <small class="text-muted">
+      ℹ️ {{ t('trust_note') }}
+    </small>
+  </div>
+</div>
+{% endif %}
+
+{% if result.alternatives %}
+<div class="card-modern">
+  <div class="card-body p-4">
+    <h5 class="section-title">{{ t('alt_crops') }}</h5>
+    <div>{% for alt in result.alternatives %}<span class="alt-crop-chip">✅ {{translate_crop(alt)}}</span>{% endfor %}</div>
+    <p class="small text-muted mt-3 mb-0">💡 {{ t('alt_crops_note') }}</p>
+  </div>
+</div>
+{% endif %}
+
+{% if result.stories %}
+<div class="mb-4">
+  <h5 class="section-title" style="border-color:#f9a825;">
+    🌾 Farmer Success Stories
+    <span style="background:#f9a825;color:#333;font-size:.75rem;padding:2px 10px;
+                 border-radius:20px;margin-left:8px;">
+      {{ result.stories|length }} Real Farmer{{ 's' if result.stories|length > 1 else '' }}
+    </span>
+  </h5>
+
+  {% for s in result.stories %}
+  <div class="story-card mb-3">
+    {% if s.is_real %}
+    <div class="row align-items-start">
+      <div class="col-md-2 text-center">
+        {% if s.image_path %}
+        <div style="position:relative;display:inline-block;">
+          <img src="{{ url_for('static', filename='uploads/' + s.image_path) }}"
+               style="width:80px;height:80px;border-radius:50%;object-fit:cover;
+                      border:3px solid #f9a825;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+          <span style="position:absolute;bottom:-4px;right:-4px;background:#f9a825;
+                       border-radius:50%;width:22px;height:22px;display:flex;
+                       align-items:center;justify-content:center;font-size:.75rem;">✅</span>
+        </div>
+        {% else %}
+        <div style="font-size:3rem;">👨‍🌾</div>
+        {% endif %}
+        <div class="mt-2">
+          <span style="background:#f9a825;color:#333;padding:2px 10px;
+                       border-radius:20px;font-size:.7rem;font-weight:700;">
+            ✅ Real Farmer
+          </span>
+        </div>
+      </div>
+
+      <div class="col-md-10">
+        <div class="fw-700 mb-1" style="font-size:1rem;">
+          {{ s.farmer_name }}
+          <span class="text-muted small ms-2">— {{ s.district }}</span>
+        </div>
+        <div class="mb-2">
+          <span style="background:#e8f5e9;color:#2d6a4f;padding:3px 12px;
+                       border-radius:20px;font-size:.82rem;font-weight:600;">
+            🌾 {{ translate_crop(s.crop) }}
+          </span>
+          <span class="ms-2 small text-muted">❤️ {{ s.likes }} farmers found this helpful</span>
+        </div>
+        <p class="mb-2" style="font-style:italic;color:#444;font-size:.9rem;
+                                border-left:3px solid #f9a825;padding-left:10px;">
+          "{{ s.body }}"
+        </p>
+
+        {% if s.video_path %}
+        <div class="mt-2">
+          <video
+            src="{{ url_for('static', filename='uploads/' + s.video_path) }}"
+            style="width:100%;max-width:380px;border-radius:12px;
+                   border:2px solid #f9a825;"
+            controls
+            playsinline
+            preload="metadata"
+            {% if s.image_path %}
+            poster="{{ url_for('static', filename='uploads/' + s.image_path) }}"
+            {% endif %}>
+          </video>
+          <div style="font-size:.72rem;color:#888;margin-top:4px;">
+            📹 Real farm footage — {{ s.district }}, Telangana
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Hardcoded fallback -->
+    <div class="row align-items-center">
+      <div class="col-md-2 text-center">
+        <div style="font-size:2.5rem;font-weight:900;color:#f9a825;">
+          {{ s.percent }}%
+        </div>
+        <div class="small text-muted">{{ t('farmers_succeeded') }}</div>
+      </div>
+      <div class="col-md-10">
+        <p class="mb-1 fw-600">
+          <strong>{{ result.district }}</strong> —
+          <strong>{{ s.percent }}%</strong> farmers grew
+          <strong>{{ translate_crop(s.crop) }}</strong>
+          ({{ s.season }})
+        </p>
+        <p class="mb-0 text-success fw-700">
+          {{ t('avg_profit') }}: <strong>{{ s.profit }}</strong>
+        </p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+</div>
+{% endif %}
+
+<div class="card-modern">
+  <div class="card-body p-4">
+    <h5 class="section-title">{{ t('expert_consult') }}</h5>
+    <div class="expert-card">
+      <div class="row g-3">
+        <div class="col-md-4 text-center">
+          <div style="font-size:3rem;">🤖</div>
+          <h6 class="fw-700">{{ t('ai_chatbot') }}</h6>
+          <button class="btn btn-primary btn-sm rounded-pill" onclick="openChat()">{{ t('ask_ai_btn') }}</button>
+        </div>
+        <div class="col-md-4 text-center">
+          <div style="font-size:3rem;">📞</div>
+          <h6 class="fw-700">{{ t('kisan_helpline') }}</h6>
+          <a href="tel:1800-180-1551" class="btn btn-success btn-sm rounded-pill">📞 1800-180-1551</a>
+        </div>
+        <div class="col-md-4 text-center">
+          <div style="font-size:3rem;">✉️</div>
+          <h6 class="fw-700">{{ t('submit_query') }}</h6>
+          <a href="{{url_for('help_contact')}}" class="btn btn-warning btn-sm rounded-pill">{{ t('submit_query_btn') }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="chatModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4">
+      <div class="modal-header" style="background:linear-gradient(135deg,#2d6a4f,#40916c);color:#fff;border-radius:16px 16px 0 0;">
+        <h5 class="modal-title fw-700">🤖 {{ t('ai_chatbot') }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div id="chatMessages" style="height:300px;overflow-y:auto;padding:10px;" class="border rounded-3 mb-3 bg-light">
+          <div class="text-center text-muted py-4"><div style="font-size:2rem;">🌱</div></div>
+        </div>
+        <div class="d-flex gap-2">
+          <input type="text" id="chatInput" class="form-control rounded-pill" placeholder="..." onkeypress="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-success rounded-pill px-4" onclick="sendChat()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+<script>
+const MANDI_STATE    = "{{ result.state if result else '' }}";
+const MANDI_DISTRICT = "{{ result.district if result else '' }}";
+
+async function loadMandiPrices(crop) {
+  if (!crop || !MANDI_STATE) return;
+
+  const nameEl = document.getElementById('mandiCropName');
+  if (nameEl) {
+    const btn = document.getElementById(`mandiBtn-${crop.replace(/ /g,'-')}`);
+    nameEl.textContent = btn ? btn.textContent.trim() : crop;
+  }
+
+  document.querySelectorAll('#mandiCropBtns button').forEach(b => {
+    b.classList.remove('btn-success');
+    b.classList.add('btn-outline-success');
+  });
+  const activeBtn = document.getElementById(`mandiBtn-${crop.replace(/ /g,'-')}`);
+  if (activeBtn) {
+    activeBtn.classList.remove('btn-outline-success');
+    activeBtn.classList.add('btn-success');
+  }
+
+  document.getElementById('mandiLoading').style.display = 'block';
+  document.getElementById('mandiTable').style.display   = 'none';
+  document.getElementById('mandiNoData').style.display  = 'none';
+
+  try {
+    const res  = await fetch(
+      `/api/mandi-prices/${encodeURIComponent(crop)}/`+
+      `${encodeURIComponent(MANDI_STATE)}/`+
+      `${encodeURIComponent(MANDI_DISTRICT)}`
+    );
+    const data = await res.json();
+    document.getElementById('mandiLoading').style.display = 'none';
+
+    if (!data.mandis || data.mandis.length === 0) {
+      document.getElementById('mandiNoData').style.display = 'block';
+      return;
+    }
+
+    const tbody = document.getElementById('mandiTableBody');
+    tbody.innerHTML = '';
+    data.mandis.forEach((m, i) => {
+      const isTop = i === 0;
+      const row   = document.createElement('tr');
+      if (isTop) row.style.background = '#f0fff4';
+      row.innerHTML = `
+        <td>
+          ${isTop ? '🏆 ' : ''}<strong>${m.mandi}</strong>
+          ${isTop ? '<span style="background:#ffd700;color:#333;font-size:0.65rem;padding:1px 6px;border-radius:10px;margin-left:4px;">Best Price</span>' : ''}
+        </td>
+         <td>${m.district}${m.state && m.state !== '{{ result.state if result else "" }}' ? '<br><small style="color:#888;">'+m.state+'</small>' : ''}</td>
+        <td style="color:#666;">₹${m.min}/kg</td>
+        <td style="font-weight:700;color:#2d6a4f;font-size:1rem;">₹${m.modal}/kg</td>
+        <td style="color:#40916c;">₹${m.max}/kg</td>
+        <td style="color:#888;font-size:0.8rem;">${m.date}</td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    const best    = data.mandis[0];
+    const alertEl = document.getElementById('bestMandiAlert');
+    alertEl.innerHTML = `
+      💡 <strong>Best price today:</strong>
+      <strong style="color:#2d6a4f;">${best.mandi}</strong>
+      — ₹${best.max}/kg (Max) &nbsp;|&nbsp; Modal: ₹${best.modal}/kg
+      <span style="color:#666;font-size:0.85rem;margin-left:8px;">
+        Sell here for maximum profit today
+      </span>
+    `;
+    alertEl.style.display = 'block';
+    document.getElementById('mandiTable').style.display = 'block';
+    document.getElementById('mandiUpdatedTime').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-IN',
+        {hour:'2-digit', minute:'2-digit'});
+
+  } catch(e) {
+    document.getElementById('mandiLoading').style.display = 'none';
+    document.getElementById('mandiNoData').style.display  = 'block';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  {% if result and result.top_crop %}
+  setTimeout(() => loadMandiPrices('{{ result.top_crop.name }}'), 800);
+  {% endif %}
+});
+</script>
+
+<script>
+const districtsData   = {{ districts | tojson }};
+const districtsDisplay = {{ (districts_display | tojson) if districts_display else '{}' }};
+const statesDisplay    = {{ (states_display  | tojson) if states_display  else '{}' }};
+
+/* ── District loader ── */
+function loadDistricts(state) {
+  const sel = document.getElementById('districtSelect');
+  sel.innerHTML = '<option value="">{{ t("select_district") }}</option>';
+  (districtsData[state] || []).forEach(d => {
+    const label = districtsDisplay[d] || d;
+    sel.innerHTML += `<option value="${d}">${label}</option>`;
+  });
+  hideLW();
+}
+
+function onDistrictChange() {
+  const district = document.getElementById('districtSelect').value;
+  if (district) fetchLiveWeather();
+  else hideLW();
+}
+
+/* ── Weather helpers ── */
+const RAIN_ICONS = {heavy:'⛈️', good:'🌦️', moderate:'⛅', low:'🌤️', 'very low':'☀️'};
+function getLWTheme(d){
+  if(d.drought_prob>50) return 'lw-drought';
+  if(d.temp>36)         return 'lw-hot';
+  if(['heavy','good'].includes(d.rainfall)) return 'lw-rain';
+  if(d.temp<26)         return 'lw-cool';
+  return 'lw-normal';
+}
+function getRainPct(r){ return {heavy:75,good:40,moderate:20,low:8,'very low':3}[r]||10; }
+function getWind(h){ return Math.round(8+(100-h)/5); }
+function nowTime(){ return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+
+/* ── Widget state ── */
+let lwTimer = null;
+let lwCountdown = 30;
+
+function hideLW(){
+  document.getElementById('lwWidget').classList.remove('lw-show');
+  clearInterval(lwTimer);
+}
+
+async function fetchLiveWeather(){
+  const state    = document.getElementById('stateSelect').value;
+  const district = document.getElementById('districtSelect').value;
+  if(!state||!district) return;
+
+  const widget = document.getElementById('lwWidget');
+  widget.className = 'lw-widget lw-normal lw-show';
+  showSkeleton();
+
+  try {
+    const res  = await fetch(`/api/weather/${encodeURIComponent(state)}/${encodeURIComponent(district)}`);
+    const data = await res.json();
+    renderLW(district, state, data);
+    startLWCountdown(state, district);
+  } catch(e){
+    document.getElementById('lwUpdated').textContent = '⚠️ Could not fetch weather. Check internet.';
+  }
+}
+
+function showSkeleton(){
+  document.getElementById('lwAlertStrip').style.display = 'none';
+  document.getElementById('lwAgriRow').style.display    = 'none';
+  document.getElementById('lwMain').innerHTML = `
+    <div class="lw-left">
+      <div class="lw-shimmer" style="width:46px;height:46px;border-radius:50%;"></div>
+      <div>
+        <div class="lw-shimmer" style="width:140px;height:15px;margin-bottom:7px;"></div>
+        <div class="lw-shimmer" style="width:95px;height:11px;"></div>
+      </div>
+    </div>
+    <div class="lw-stats">
+      ${['Humidity','Wind','Rain','Drought'].map(l=>`
+        <div class="lw-stat">
+          <div class="lw-shimmer" style="width:42px;height:14px;margin:0 auto 4px;"></div>
+          <div class="lw-stat-lbl">${l}</div>
+        </div>`).join('')}
+    </div>`;
+  document.getElementById('lwUpdated').textContent = '⏳ Fetching live weather...';
+}
+
+function renderLW(district, state, d){
+  const widget = document.getElementById('lwWidget');
+  widget.className = `lw-widget ${getLWTheme(d)} lw-show`;
+
+  const icon    = RAIN_ICONS[d.rainfall]||'⛅';
+  const wind    = getWind(d.humidity);
+  const rainPct = getRainPct(d.rainfall);
+  const liveTag = d.real ? '🔴 Live' : '📊 Historical';
+  const city    = d.city || district;
+
+  document.getElementById('lwMain').innerHTML = `
+    <div class="lw-left">
+      <div class="lw-big-icon">${icon}</div>
+      <div class="lw-info-block">
+        <div class="lw-location">📍 ${district}, ${state}</div>
+        <div class="lw-desc">${d.description||'Live conditions'} · ${city}</div>
+        <div class="lw-live-badge"><span class="lw-pulse"></span>${liveTag}</div>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <div class="lw-temp-big">${d.temp}°<span style="font-size:22px;opacity:.7;">C</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.65);">Feels like ${d.temp+2}°C</div>
+    </div>
+    <div class="lw-stats">
+      <div class="lw-stat"><div class="lw-stat-val">${d.humidity}%</div><div class="lw-stat-lbl">💧 Humidity</div></div>
+      <div class="lw-stat"><div class="lw-stat-val">${wind} km/h</div><div class="lw-stat-lbl">💨 Wind</div></div>
+      <div class="lw-stat"><div class="lw-stat-val">${rainPct}%</div><div class="lw-stat-lbl">🌧️ Rain</div></div>
+      <div class="lw-stat"><div class="lw-stat-val">${d.drought_prob}%</div><div class="lw-stat-lbl">🏜️ Drought</div></div>
+    </div>`;
+
+  /* Alert strip */
+  const alertEl = document.getElementById('lwAlertStrip');
+  let alertMsg  = '';
+  if(d.drought_prob>50)      alertMsg = `🚨 Critical drought risk (${d.drought_prob}%) at ${district} — Irrigate immediately!`;
+  else if(d.drought_prob>30) alertMsg = `⚠️ Moderate drought risk (${d.drought_prob}%) — Plan irrigation in 2 days.`;
+  else if(rainPct>50)        alertMsg = `🌧️ Heavy rain expected (${rainPct}%) — Delay spray, check drainage.`;
+  else if(d.temp>36)         alertMsg = `🌡️ Heat stress alert — ${d.temp}°C. Increase irrigation frequency.`;
+  if(alertMsg){ alertEl.textContent=alertMsg; alertEl.style.display='flex'; }
+  else { alertEl.style.display='none'; }
+
+  /* Agri chips */
+  const sprayOk  = wind<20 && rainPct<35;
+  const irrigate = d.drought_prob>30 || d.humidity<50;
+  const soilMoist= d.humidity>65?'High':d.humidity>48?'Moderate':'Dry';
+  const soilCls  = d.humidity>65?'good':d.humidity>48?'warn':'bad';
+  const visitOk  = d.temp<35 && rainPct<40;
+  document.getElementById('lwAgriRow').innerHTML = `
+    <span class="lw-agri-chip ${sprayOk?'good':'bad'}">🧴 Spray: ${sprayOk?'Good':'Avoid today'}</span>
+    <span class="lw-agri-chip ${irrigate?'warn':'good'}">💧 Irrigation: ${irrigate?'Needed':'OK'}</span>
+    <span class="lw-agri-chip ${soilCls}">🌱 Soil moisture: ${soilMoist}</span>
+    <span class="lw-agri-chip ${visitOk?'good':'warn'}">🚗 Visit farm: ${visitOk?'Good day':'Plan tomorrow'}</span>
+    <span class="lw-agri-chip ${d.drought_prob<30?'good':d.drought_prob<50?'warn':'bad'}">🏜️ Drought: ${d.drought_prob<30?'Low':d.drought_prob<50?'Moderate':'High'}</span>`;
+  document.getElementById('lwAgriRow').style.display = 'flex';
+
+  document.getElementById('lwUpdated').textContent = `Updated ${nowTime()} · ${liveTag}`;
+}
+
+function startLWCountdown(state, district){
+  clearInterval(lwTimer);
+  lwCountdown = 30;
+  lwTimer = setInterval(()=>{
+    lwCountdown--;
+    document.getElementById('lwCountdownFill').style.width  = Math.max(0,(lwCountdown/30*100))+'%';
+    document.getElementById('lwCountdownLabel').textContent = `Refreshing in ${lwCountdown}s`;
+    if(lwCountdown<=0){
+      lwCountdown=30;
+      fetchLiveWeather();
+    }
+  },1000);
+}
+
+/* ── Existing functions (unchanged) ── */
+function showCat(cat,btn){
+  document.querySelectorAll('.cat-section').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('cat-'+cat).style.display='block';
+  btn.classList.add('active');
+}
+function toggleCalendar(id){
+  const el=document.getElementById(id);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+function showCompare(){
+  const sec=document.getElementById('compareSection');
+  sec.style.display=sec.style.display==='none'?'block':'none';
+  sec.scrollIntoView({behavior:'smooth'});
+}
+function openChat(){ new bootstrap.Modal(document.getElementById('chatModal')).show(); }
+async function sendChat(){
+  const input=document.getElementById('chatInput');
+  const q=input.value.trim(); if(!q) return;
+  const msgs=document.getElementById('chatMessages');
+  msgs.innerHTML+=`<div class="d-flex justify-content-end mb-2"><div class="bg-success text-white rounded-3 px-3 py-2 small">${q}</div></div>`;
+  input.value='';
+  msgs.innerHTML+=`<div class="d-flex mb-2"><div class="bg-white border rounded-3 px-3 py-2 small text-muted" id="typing">🤖 ...</div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,context:'soil={{ result.soil_type if result else "" }},season={{ result.season if result else "" }}'})});
+    const data=await res.json();
+    document.getElementById('typing').outerHTML=`<div class="d-flex mb-2"><div class="bg-white border rounded-3 px-3 py-2 small">${data.reply}</div></div>`;
+  }catch(e){
+    document.getElementById('typing').outerHTML=`<div class="d-flex mb-2"><div class="bg-white border rounded-3 px-3 py-2 small text-danger">Error. Try again.</div></div>`;
+  }
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function speakResult(){
+  const lang='{{ session.get("language","en") }}';
+  const soil='{{ result.soil_type if result else "" }}';
+  const top ='{{ result.top_crop.name if result and result.top_crop else "" }}';
+  const texts={
+    en:`Your soil is ${soil}. Top recommended crop is ${top}.`,
+    hi:`आपकी मिट्टी ${soil} है। सबसे अनुशंसित फसल ${top} है।`,
+    te:`మీ మట్టి ${soil}. సిఫార్సు చేయబడిన పంట ${top}.`
+  };
+  const u=new SpeechSynthesisUtterance(texts[lang]||texts.en);
+  u.lang=lang==='hi'?'hi-IN':lang==='te'?'te-IN':'en-IN';
+  u.rate=0.85;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  {% if result %}
+  fetchLiveWeather();
+  {% endif %}
+});
+</script>
+
+{% endblock %}

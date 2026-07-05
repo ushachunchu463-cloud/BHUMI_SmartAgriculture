@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero">
+  <div class="page-container">
+    <div class="row align-items-center">
+      <div class="col-md-9">
+        <h1>{{ t('welcome') }}, {{ current_user.name.split()[0] }}! 👨‍🌾</h1>
+       <p>🌾 BHUMI Smart Agriculture | {{ t('dashboard') }} | {{ current_user.state }}, {{ current_user.district }}</p>
+      </div>
+      <div class="col-md-3 text-end d-none d-md-block" style="font-size:4rem;">🌾</div>
+    </div>
+  </div>
+</div>
+<div class="page-container">
+  <!-- TIP -->
+  <div class="result-card mb-4" style="border-left-color:#e9c46a;background:linear-gradient(135deg,#fff9e6,#fffdf5);">
+    <strong style="color:#856404;">💡 {{ t('quick_tip') if t('quick_tip') != 'quick_tip' else 'Quick Tip of the Day' }}</strong>
+    <p class="mb-0 mt-1" style="color:#5a4a00;">{{ tip }}</p>
+  </div>
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-box"><div class="stat-number">{{ total_analyses }}</div><div style="font-size:.82rem;color:#888;">Soil Analyses</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-box"><div class="stat-number">{{ total_detections }}</div><div style="font-size:.82rem;color:#888;">Disease Detections</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-box"><div class="stat-number">10+</div><div style="font-size:.82rem;color:#888;">Govt Schemes</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-box"><div class="stat-number" style="font-size:1.3rem;">{{ current_user.state[:6] }}</div><div style="font-size:.82rem;color:#888;">Your Region</div></div></div>
+  </div>
+  <!-- MENU CARDS -->
+  <h2 class="section-title">🌾 Welcome to BHUMI — What would you like to do today?</h2>
+  <div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+      <a href="{{ url_for('crop_ideas') }}" style="text-decoration:none;">
+        <div class="card h-100 text-center" style="border-top:4px solid #40916c;">
+          <div class="card-body p-4"><div style="font-size:2.8rem;margin-bottom:.8rem;">🌱</div>
+          <h5 style="color:#2d6a4f;font-family:'Playfair Display',serif;">{{ t('crop_ideas') }}</h5>
+          <p style="color:#888;font-size:.82rem;margin:0;">Upload soil image → Get AI crop recommendations for your region & season</p></div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <a href="{{ url_for('disease_prediction') }}" style="text-decoration:none;">
+        <div class="card h-100 text-center" style="border-top:4px solid #c1121f;">
+          <div class="card-body p-4"><div style="font-size:2.8rem;margin-bottom:.8rem;">🔬</div>
+          <h5 style="color:#c1121f;font-family:'Playfair Display',serif;">{{ t('disease_prediction') }}</h5>
+          <p style="color:#888;font-size:.82rem;margin:0;">Upload leaf image → AI detects disease & provides treatment</p></div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <a href="{{ url_for('schemes') }}" style="text-decoration:none;">
+        <div class="card h-100 text-center" style="border-top:4px solid #6f42c1;">
+          <div class="card-body p-4"><div style="font-size:2.8rem;margin-bottom:.8rem;">🏛️</div>
+          <h5 style="color:#6f42c1;font-family:'Playfair Display',serif;">{{ t('schemes') }}</h5>
+          <p style="color:#888;font-size:.82rem;margin:0;">Explore Central & State government schemes & subsidies for farmers</p></div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <a href="{{ url_for('help_contact') }}" style="text-decoration:none;">
+        <div class="card h-100 text-center" style="border-top:4px solid #0077b6;">
+          <div class="card-body p-4"><div style="font-size:2.8rem;margin-bottom:.8rem;">📞</div>
+          <h5 style="color:#0077b6;font-family:'Playfair Display',serif;">{{ t('help') }}</h5>
+          <p style="color:#888;font-size:.82rem;margin:0;">Get help, read FAQs & contact our agriculture experts</p></div>
+        </div>
+      </a>
+    </div>
+  </div>
+  <!-- MARKET PRICES -->
+  {% if market_prices %}
+  <h2 class="section-title">📈 {{ t('market_prices') }}</h2>
+  <div class="card mb-4">
+    <div class="card-body p-3">
+      <div class="row g-2">
+        {% for mp in market_prices %}
+        <div class="col-6 col-md-4 col-lg-2">
+          <div style="background:#f5faf6;border-radius:10px;padding:.7rem;text-align:center;">
+            <div style="font-weight:700;font-size:.88rem;color:#2d6a4f;">{{ mp.crop_name }}</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#2d6a4f;">₹{{ mp.price_per_kg }}/kg</div>
+            <span class="badge-{{ mp.demand }}" style="font-size:.7rem;">{{ mp.demand.title() }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="font-size:.75rem;color:#aaa;margin-top:.7rem;text-align:right;"></div>
+    </div>
+  </div>
+  {% endif %}
+  <!-- RECENT -->
+  {% if recent_soil or recent_disease %}
+  <h2 class="section-title">Recent Activity</h2>
+  <div class="row g-3">
+    {% if recent_soil %}
+    <div class="col-md-6">
+      <div class="result-card">
+        <strong>🌱 Last Soil Analysis</strong> — {{ recent_soil.soil_type }}<br>
+        <small style="color:#888;">{{ recent_soil.state }}, {{ recent_soil.district }} | {{ recent_soil.season }} | {{ recent_soil.created_at.strftime('%d %b %Y') }}</small>
+        <div style="margin-top:.5rem;"><a href="{{ url_for('crop_ideas') }}" class="btn btn-sm btn-green">New Analysis</a></div>
+      </div>
+    </div>
+    {% endif %}
+    {% if recent_disease %}
+    <div class="col-md-6">
+      <div class="result-card" style="border-left-color:#c1121f;">
+        <strong>🔬 Last Detection</strong> — <span style="color:#c1121f;">{{ recent_disease.disease_name }}</span><br>
+        <small style="color:#888;">Confidence: {{ recent_disease.confidence }}% | {{ recent_disease.created_at.strftime('%d %b %Y') }}</small>
+        <div style="margin-top:.5rem;"><a href="{{ url_for('disease_prediction') }}" class="btn btn-sm" style="background:linear-gradient(135deg,#c1121f,#e63946);color:white;border:none;border-radius:8px;padding:5px 14px;font-size:.82rem;">New Detection</a></div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+  <!-- PORTALS -->
+  <h2 class="section-title mt-4">🔗 Useful Government Portals</h2>
+  <div class="row g-3 mb-2">
+    {% for name,url,icon in [('PM Kisan','https://pmkisan.gov.in','💰'),('Agmarknet','https://agmarknet.gov.in','📊'),('eNAM Market','https://enam.gov.in','🛒'),('IMD Weather','https://mausam.imd.gov.in','🌤️'),('Farmer Portal','https://farmer.gov.in','👨‍🌾'),('Soil Health','https://soilhealth.dac.gov.in','🌱')] %}
+    <div class="col-4 col-md-2">
+      <a href="{{url}}" target="_blank" style="text-decoration:none;">
+        <div class="stat-box" style="padding:.8rem;cursor:pointer;">
+          <div style="font-size:1.6rem;">{{icon}}</div>
+          <div style="font-size:.72rem;color:#555;margin-top:.3rem;font-weight:600;">{{name}}</div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

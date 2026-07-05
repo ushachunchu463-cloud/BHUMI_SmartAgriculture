@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Voice Test</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 20px; background: #f5f9f5; }
+button { padding: 12px 20px; margin: 8px; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; }
+.green { background: #2d6a4f; color: white; }
+.blue { background: #0077b6; color: white; }
+.red { background: #e63946; color: white; }
+.box { background: white; border-radius: 12px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,.1); }
+select { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; width: 100%; margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<h2>🔊 Voice Language Tester</h2>
+<p>Use this to find which voice works for Telugu/Hindi on your device.</p>
+
+<div class="box">
+  <strong>Step 1: Click to load all available voices</strong><br>
+  <button class="blue" onclick="loadVoices()">🔄 Load Available Voices</button>
+  <div id="voiceCount" style="color:#888;margin-top:8px;"></div>
+</div>
+
+<div class="box">
+  <strong>Step 2: Select a voice and test it</strong><br>
+  <select id="voiceSelect">
+    <option>-- Click Load Voices first --</option>
+  </select>
+  <input type="text" id="testText" value="నమస్కారం, నేను మీ స్మార్ట్ వ్యవసాయ సహాయకుడిని" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;margin:8px 0;font-size:1rem;">
+  <button class="green" onclick="testVoice()">▶️ Test This Voice</button>
+  <button class="red" onclick="stopVoice()">⏹ Stop</button>
+</div>
+
+<div class="box">
+  <strong>Quick Test Buttons:</strong><br>
+  <button class="green" onclick="quickTest('te-IN', 'నమస్కారం రైతు అన్నా. మీకు స్వాగతం')">🌾 Telugu te-IN</button>
+  <button class="blue" onclick="quickTest('hi-IN', 'नमस्कार किसान भाई। आपका स्वागत है')">🇮🇳 Hindi hi-IN</button>
+  <button onclick="quickTest('en-IN', 'Hello farmer. Welcome to Smart Agriculture')" style="background:#666;color:white;">🇬🇧 English en-IN</button>
+  <button onclick="quickTest('en-US', 'Hello farmer. Welcome to Smart Agriculture')" style="background:#444;color:white;">🇺🇸 English en-US</button>
+</div>
+
+<div class="box">
+  <strong>All voices on your device:</strong>
+  <div id="voiceList" style="max-height:300px;overflow-y:auto;font-size:.85rem;color:#555;"></div>
+</div>
+
+<div class="box" id="resultBox" style="display:none;background:#e8f5e9;border-left:4px solid #2d6a4f;">
+  <strong>✅ Result:</strong>
+  <div id="resultText"></div>
+</div>
+
+<script>
+let voices = [];
+
+function loadVoices() {
+  voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) {
+    // Some browsers load async
+    window.speechSynthesis.onvoiceschanged = () => {
+      voices = window.speechSynthesis.getVoices();
+      renderVoices();
+    };
+    // Force trigger
+    const u = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(u);
+    window.speechSynthesis.cancel();
+  } else {
+    renderVoices();
+  }
+}
+
+function renderVoices() {
+  document.getElementById('voiceCount').textContent = `Found ${voices.length} voices on your device.`;
+  
+  const sel = document.getElementById('voiceSelect');
+  sel.innerHTML = '';
+  voices.forEach((v, i) => {
+    sel.innerHTML += `<option value="${i}">[${v.lang}] ${v.name}</option>`;
+  });
+
+  // Highlight Indian voices
+  const list = document.getElementById('voiceList');
+  const indian = voices.filter(v => v.lang.includes('IN') || v.lang.includes('te') || v.lang.includes('hi') || v.name.toLowerCase().includes('india') || v.name.toLowerCase().includes('telugu') || v.name.toLowerCase().includes('hindi'));
+  
+  list.innerHTML = `<strong style="color:#2d6a4f;">🇮🇳 Indian voices found: ${indian.length}</strong><br><br>`;
+  indian.forEach(v => {
+    list.innerHTML += `<div style="padding:4px 0;border-bottom:1px solid #eee;">✅ <strong>${v.name}</strong> — ${v.lang}</div>`;
+  });
+  
+  list.innerHTML += `<br><strong>All voices:</strong><br>`;
+  voices.forEach(v => {
+    const highlight = v.lang.includes('te') || v.lang.includes('hi') || v.name.toLowerCase().includes('telugu') || v.name.toLowerCase().includes('hindi');
+    list.innerHTML += `<div style="padding:3px 0;${highlight ? 'color:#2d6a4f;font-weight:bold;' : ''}">${v.lang} — ${v.name}</div>`;
+  });
+}
+
+function testVoice() {
+  const sel = document.getElementById('voiceSelect');
+  const voice = voices[parseInt(sel.value)];
+  const text = document.getElementById('testText').value;
+  
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.voice = voice;
+  u.lang = voice.lang;
+  u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+  
+  document.getElementById('resultBox').style.display = 'block';
+  document.getElementById('resultText').textContent = `Speaking with: ${voice.name} (${voice.lang})`;
+}
+
+function quickTest(lang, text) {
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+  
+  document.getElementById('resultBox').style.display = 'block';
+  document.getElementById('resultText').textContent = `Testing lang="${lang}" — if it still sounds English, your device does not have ${lang} voice installed.`;
+}
+
+function stopVoice() { window.speechSynthesis.cancel(); }
+
+// Auto-load
+window.onload = () => setTimeout(loadVoices, 500);
+</script>
+</body>
+</html>

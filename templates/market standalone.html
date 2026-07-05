@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Market — AgriMart</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:#f2f3f5;font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;}
+
+/* ── PHONE SHELL (for desktop preview) ── */
+.phone-shell{max-width:400px;margin:0 auto;background:#f2f3f5;min-height:100vh;position:relative;overflow-x:hidden;}
+
+/* ── TOP BAR ── */
+.mkt-topbar{background:#fff;padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:1px solid #ebebeb;}
+.mkt-title{font-size:1.4rem;font-weight:800;color:#111;letter-spacing:-0.3px;}
+.topbar-right{display:flex;gap:10px;align-items:center;}
+.icon-btn{width:40px;height:40px;border-radius:50%;background:#eeeef8;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.05rem;position:relative;transition:background .15s;}
+.icon-btn:hover{background:#e0e0f4;}
+.cart-badge{position:absolute;top:-2px;right:-2px;background:#4f46e5;color:#fff;border-radius:50%;width:17px;height:17px;font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;}
+
+/* ── SEARCH ── */
+.search-area{background:#fff;padding:10px 14px 13px;}
+.search-box{display:flex;align-items:center;gap:9px;background:#f2f3f5;border-radius:50px;padding:10px 16px;border:1.5px solid #e6e6e6;}
+.search-box input{border:none;background:transparent;font-size:.88rem;font-family:'DM Sans',sans-serif;color:#222;outline:none;flex:1;}
+.search-box input::placeholder{color:#b0b0b0;}
+.s-ico{color:#999;font-size:.95rem;}
+
+/* ── CATEGORY TABS ── */
+.cat-scroll-wrap{background:#fff;border-bottom:1.5px solid #ebebeb;overflow:hidden;}
+.cat-tabs{display:flex;overflow-x:auto;scrollbar-width:none;padding:0 6px;}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{display:flex;align-items:center;gap:5px;padding:12px 15px;white-space:nowrap;cursor:pointer;border-bottom:2.5px solid transparent;font-size:.84rem;font-weight:600;color:#777;flex-shrink:0;transition:all .18s;user-select:none;}
+.cat-tab.active{border-bottom-color:#4f46e5;color:#4f46e5;}
+.cat-tab:hover:not(.active){color:#333;}
+.tab-ico{font-size:1rem;}
+
+/* ── SECTION HEAD ── */
+.sec-head{padding:16px 14px 10px;}
+.sec-head h2{font-size:1.2rem;font-weight:800;color:#111;letter-spacing:-0.2px;}
+.sec-head p{font-size:.8rem;color:#999;margin-top:2px;font-weight:500;}
+
+/* ── PRODUCT GRID ── */
+.p-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 10px 80px;}
+
+/* ── PRODUCT CARD ── */
+.p-card{background:#fff;border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.07);transition:transform .16s,box-shadow .16s;position:relative;}
+.p-card:active{transform:scale(0.965);}
+.p-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.11);}
+
+.p-img{width:100%;aspect-ratio:1/1;background:#f5f5f7;display:flex;align-items:center;justify-content:center;font-size:4.2rem;position:relative;overflow:hidden;}
+.p-img img{width:100%;height:100%;object-fit:cover;display:block;}
+
+.wish-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border:none;border-radius:50%;width:30px;height:30px;font-size:.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.13);transition:transform .18s;z-index:2;}
+.wish-btn:hover{transform:scale(1.2);}
+
+.p-info{padding:9px 10px 12px;}
+.p-cat{display:flex;align-items:center;gap:3px;font-size:.68rem;color:#999;font-weight:600;margin-bottom:4px;}
+.p-name{font-size:.86rem;font-weight:700;color:#111;line-height:1.25;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.2em;}
+.p-brand{font-size:.68rem;color:#bbb;font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:7px;}
+.p-price-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;}
+.p-old{font-size:.76rem;color:#ccc;text-decoration:line-through;}
+.disc-pill{background:#ede9fe;color:#7c3aed;font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+.p-from{font-size:.72rem;color:#666;font-weight:500;}
+.p-from b{font-size:.92rem;font-weight:800;color:#111;}
+.p-variants{font-size:.69rem;color:#aaa;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.p-add-btn{width:100%;margin-top:9px;background:#f0f0fb;color:#4f46e5;border:1.5px solid #dbd9f8;border-radius:8px;padding:7px 0;font-size:.76rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.p-add-btn:hover{background:#4f46e5;color:#fff;border-color:#4f46e5;}
+
+.no-results{grid-column:1/-1;text-align:center;padding:60px 20px;color:#ccc;}
+.no-results .nr-ico{font-size:2.8rem;margin-bottom:10px;}
+
+/* ── BOTTOM NAV (visual only) ── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:400px;background:#fff;border-top:1px solid #ebebeb;display:flex;z-index:150;padding:6px 0 10px;}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;}
+.bnav-ico{font-size:1.3rem;}
+.bnav-lbl{font-size:.65rem;font-weight:600;color:#aaa;}
+.bnav-item.active .bnav-ico,.bnav-item.active .bnav-lbl{color:#4f46e5;}
+.bnav-item.active .bnav-ico-wrap{background:#eeeef8;border-radius:20px;padding:4px 18px;}
+
+/* ── DETAIL BOTTOM SHEET ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;backdrop-filter:blur(2px);}
+.overlay.on{display:block;}
+.b-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(102%);width:100%;max-width:400px;background:#fff;border-radius:20px 20px 0 0;z-index:301;max-height:91vh;overflow-y:auto;transition:transform .28s cubic-bezier(.32,0,.67,0);box-shadow:0 -6px 36px rgba(0,0,0,.15);}
+.b-sheet.on{transform:translateX(-50%) translateY(0);}
+.sheet-drag{width:36px;height:4px;background:#e0e0e0;border-radius:4px;margin:11px auto 0;}
+.sheet-x{position:absolute;top:12px;right:14px;background:#f2f3f5;border:none;border-radius:50%;width:30px;height:30px;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
+
+/* Detail content */
+.d-img{width:100%;height:220px;background:#f5f5f7;display:flex;align-items:center;justify-content:center;font-size:7rem;}
+.d-img img{width:100%;height:100%;object-fit:contain;}
+.d-body{padding:16px 16px 24px;}
+.d-cat-lbl{font-size:.7rem;color:#999;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+.d-name{font-size:1.1rem;font-weight:800;color:#111;line-height:1.3;margin-bottom:3px;}
+.d-brand{font-size:.74rem;color:#bbb;text-transform:uppercase;letter-spacing:.4px;margin-bottom:13px;}
+.d-price-card{background:#fafafa;border-radius:11px;padding:12px 13px;margin-bottom:14px;}
+.d-price-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.d-price{font-size:1.35rem;font-weight:800;color:#111;}
+.d-old{font-size:.88rem;color:#ccc;text-decoration:line-through;}
+.d-pill{background:#ede9fe;color:#7c3aed;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;}
+.d-meta{font-size:.74rem;color:#999;line-height:1.7;}
+.d-stock{color:#22c55e;font-weight:700;}
+.d-var-label{font-size:.76rem;font-weight:700;color:#666;margin-bottom:7px;}
+.d-variants{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.var-chip{border:1.5px solid #e0e0e0;border-radius:20px;padding:5px 13px;font-size:.78rem;font-weight:600;cursor:pointer;color:#555;transition:all .15s;}
+.var-chip.on{border-color:#4f46e5;background:#eef2ff;color:#4f46e5;}
+.d-sec{margin-bottom:12px;}
+.d-sec h6{font-size:.8rem;font-weight:700;color:#4f46e5;margin-bottom:5px;}
+.d-sec p{font-size:.82rem;color:#555;line-height:1.55;}
+.safety-card{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 11px;}
+.safety-card h6{color:#b45309!important;}
+.safety-card p{color:#92400e!important;}
+.qty-wrap{display:flex;align-items:center;gap:0;background:#f5f5f7;border-radius:9px;overflow:hidden;border:1.5px solid #e5e5e5;width:fit-content;margin:12px 0 4px;}
+.q-btn{background:none;border:none;width:34px;height:34px;font-size:1.05rem;font-weight:800;cursor:pointer;color:#4f46e5;transition:background .15s;}
+.q-btn:hover{background:#eef2ff;}
+.q-num{width:32px;text-align:center;font-weight:700;font-size:.9rem;color:#111;}
+.d-actions{display:flex;gap:9px;margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0;}
+.btn-cart-d{flex:1;background:#eef2ff;color:#4f46e5;border:1.5px solid #c7d2fe;border-radius:11px;padding:12px 6px;font-size:.84rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.btn-cart-d:hover{background:#4f46e5;color:#fff;}
+.btn-buy-d{flex:2;background:#4f46e5;color:#fff;border:none;border-radius:11px;padding:12px 6px;font-size:.84rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;}
+.btn-buy-d:hover{background:#4338ca;}
+.btn-call-d{flex:0 0 44px;background:#dcfce7;color:#16a34a;border:1.5px solid #bbf7d0;border-radius:11px;padding:12px 6px;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;}
+
+/* ── CART SHEET ── */
+.cart-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(102%);width:100%;max-width:400px;background:#fff;border-radius:20px 20px 0 0;z-index:301;max-height:88vh;display:flex;flex-direction:column;transition:transform .28s cubic-bezier(.32,0,.67,0);box-shadow:0 -6px 36px rgba(0,0,0,.15);}
+.cart-sheet.on{transform:translateX(-50%) translateY(0);}
+.cart-hdr{padding:16px 16px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.cart-hdr span{font-size:1rem;font-weight:800;color:#111;}
+.cart-bdy{flex:1;overflow-y:auto;padding:10px 14px;}
+.c-item{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid #f7f7f7;align-items:flex-start;}
+.c-img{width:52px;height:52px;border-radius:10px;background:#f5f5f7;display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0;}
+.c-detail{flex:1;}
+.c-name{font-size:.83rem;font-weight:700;color:#111;line-height:1.25;}
+.c-brand{font-size:.7rem;color:#ccc;margin-top:1px;}
+.c-price{font-size:.88rem;font-weight:800;color:#111;margin-top:4px;}
+.c-qty-row{display:flex;align-items:center;gap:7px;margin-top:5px;}
+.cq{background:#f2f3f5;border:none;border-radius:6px;width:25px;height:25px;font-size:.88rem;font-weight:800;cursor:pointer;color:#4f46e5;}
+.cn{font-size:.82rem;font-weight:700;width:18px;text-align:center;}
+.c-rm{background:none;border:none;font-size:1rem;cursor:pointer;color:#ddd;transition:color .15s;}
+.c-rm:hover{color:#ef4444;}
+.cart-ftr{padding:12px 16px 18px;border-top:1px solid #f0f0f0;flex-shrink:0;}
+.cart-total{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;}
+.cart-total span:first-child{font-size:.86rem;font-weight:600;color:#777;}
+.cart-total span:last-child{font-size:1.05rem;font-weight:800;color:#111;}
+.cart-empty{text-align:center;padding:50px 20px;color:#ccc;font-size:.88rem;}
+.btn-go{width:100%;background:#4f46e5;color:#fff;border:none;border-radius:11px;padding:13px;font-size:.92rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* ── CHECKOUT ── */
+.co-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;}
+.co-overlay.on{display:block;}
+.co-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(102%);width:100%;max-width:400px;background:#fff;border-radius:20px 20px 0 0;z-index:401;max-height:95vh;overflow-y:auto;transition:transform .28s cubic-bezier(.32,0,.67,0);box-shadow:0 -6px 36px rgba(0,0,0,.18);}
+.co-sheet.on{transform:translateX(-50%) translateY(0);}
+.co-hdr{padding:14px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:11px;position:sticky;top:0;background:#fff;z-index:10;}
+.co-back{background:#f2f3f5;border:none;border-radius:50%;width:32px;height:32px;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.co-hdr h5{font-size:.95rem;font-weight:800;color:#111;}
+.co-bdy{padding:16px;}
+.co-step{display:none;}
+.co-step.on{display:block;}
+
+/* Step dots */
+.step-bar{display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.sdot{width:26px;height:26px;border-radius:50%;background:#e8e8e8;color:#bbb;font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.sdot.act{background:#4f46e5;color:#fff;}
+.sdot.done{background:#22c55e;color:#fff;}
+.sline{flex:1;height:2px;background:#e8e8e8;max-width:44px;}
+.sline.done{background:#22c55e;}
+
+/* Form */
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:.76rem;font-weight:700;color:#666;margin-bottom:4px;}
+.fg input,.fg select{width:100%;border:1.5px solid #e6e6e6;border-radius:9px;padding:10px 13px;font-size:.86rem;font-family:'DM Sans',sans-serif;outline:none;transition:border .15s;color:#111;}
+.fg input:focus,.fg select:focus{border-color:#4f46e5;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+
+/* Pay options */
+.pay-opt{display:flex;align-items:center;gap:12px;padding:12px 13px;border:1.5px solid #e8e8e8;border-radius:11px;cursor:pointer;margin-bottom:9px;transition:all .15s;}
+.pay-opt.on{border-color:#4f46e5;background:#eef2ff;}
+.pay-ico{font-size:1.35rem;}
+.pay-lbl{font-size:.86rem;font-weight:700;color:#111;}
+.pay-sub{font-size:.7rem;color:#999;}
+
+/* Confirm */
+.confirm{text-align:center;padding:24px 16px;}
+.conf-ico{font-size:4.2rem;animation:pop .45s cubic-bezier(.26,1.32,.72,1);}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.confirm h4{font-size:1.1rem;font-weight:800;color:#111;margin:11px 0 5px;}
+.confirm p{font-size:.83rem;color:#999;}
+.o-box{background:#f8f8f8;border-radius:11px;padding:12px 13px;margin:14px 0;text-align:left;font-size:.8rem;color:#666;line-height:1.75;}
+.o-box b{color:#111;}
+.track{display:flex;justify-content:space-between;padding:12px 0;margin:4px 0 16px;}
+.t-step{text-align:center;flex:1;}
+.t-step .ti{font-size:1.3rem;}
+.t-step .tl{font-size:.62rem;font-weight:700;color:#4f46e5;margin-top:3px;}
+.t-step.dim .ti{opacity:.25;}
+.t-step.dim .tl{color:#ccc;}
+.btn-prim{width:100%;background:#4f46e5;color:#fff;border:none;border-radius:11px;padding:13px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:6px;display:block;text-align:center;text-decoration:none;}
+.btn-sec{width:100%;background:#f2f3f5;color:#444;border:1.5px solid #e0e0e0;border-radius:11px;padding:11px;font-size:.86rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px;}
+
+/* Toast */
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:9px 20px;border-radius:22px;font-size:.82rem;font-weight:600;z-index:9999;white-space:nowrap;opacity:0;transition:opacity .22s;pointer-events:none;max-width:90vw;text-align:center;}
+.toast.on{opacity:1;}
+</style>
+</head>
+<body>
+<div class="phone-shell">
+
+<!-- TOP BAR -->
+<div class="mkt-topbar">
+  <div class="mkt-title">Market</div>
+  <div class="topbar-right">
+    <button class="icon-btn" onclick="openCart()">
+      🛒
+      <div class="cart-badge" id="cartBadge">0</div>
+    </button>
+    <button class="icon-btn" style="font-size:1.2rem;font-weight:900;letter-spacing:-.5px;">⋯</button>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="search-area">
+  <div class="search-box">
+    <span class="s-ico">🔍</span>
+    <input id="searchInput" type="text" placeholder="Search by product name, crop, brand or a..." oninput="doSearch()">
+  </div>
+</div>
+
+<!-- CATEGORY TABS -->
+<div class="cat-scroll-wrap">
+  <div class="cat-tabs" id="catTabs">
+    <div class="cat-tab active" onclick="setTab('all',this)"><span class="tab-ico">🌾</span> All</div>
+    <div class="cat-tab" onclick="setTab('pesticides',this)"><span class="tab-ico">🧴</span> Pesticides</div>
+    <div class="cat-tab" onclick="setTab('fertilizers',this)"><span class="tab-ico">⚗️</span> Fertilizers</div>
+    <div class="cat-tab" onclick="setTab('seeds',this)"><span class="tab-ico">🌱</span> Seeds</div>
+    <div class="cat-tab" onclick="setTab('tools',this)"><span class="tab-ico">🔧</span> Tools</div>
+    <div class="cat-tab" onclick="setTab('irrigation',this)"><span class="tab-ico">💧</span> Irrigation</div>
+    <div class="cat-tab" onclick="setTab('organic',this)"><span class="tab-ico">🍃</span> Organic</div>
+    <div class="cat-tab" onclick="setTab('protection',this)"><span class="tab-ico">🧤</span> Protection</div>
+  </div>
+</div>
+
+<!-- SECTION HEAD -->
+<div class="sec-head">
+  <h2 id="secTitle">All Products</h2>
+  <p id="secCount"></p>
+</div>
+
+<!-- PRODUCT GRID -->
+<div class="p-grid" id="prodGrid"></div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="bnav-item">
+    <span class="bnav-ico">🌱</span>
+    <span class="bnav-lbl">Your crops</span>
+  </div>
+  <div class="bnav-item">
+    <span class="bnav-ico">🔍</span>
+    <span class="bnav-lbl">Community</span>
+  </div>
+  <div class="bnav-item active">
+    <div class="bnav-ico-wrap"><span class="bnav-ico">🏪</span></div>
+    <span class="bnav-lbl">Market</span>
+  </div>
+  <div class="bnav-item">
+    <span class="bnav-ico">👤</span>
+    <span class="bnav-lbl">You</span>
+  </div>
+</div>
+
+</div><!-- /phone-shell -->
+
+<!-- DETAIL OVERLAY + SHEET -->
+<div class="overlay" id="detailOv" onclick="closeDetail()"></div>
+<div class="b-sheet" id="detailSheet">
+  <div class="sheet-drag"></div>
+  <button class="sheet-x" onclick="closeDetail()">✕</button>
+  <div id="detailContent"></div>
+</div>
+
+<!-- CART OVERLAY + SHEET -->
+<div class="overlay" id="cartOv" onclick="closeCart()"></div>
+<div class="cart-sheet" id="cartSheet">
+  <div class="sheet-drag"></div>
+  <div class="cart-hdr">
+    <span>🛒 Your Cart</span>
+    <button class="sheet-x" style="position:static;" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-bdy" id="cartBdy"></div>
+  <div class="cart-ftr" id="cartFtr" style="display:none;">
+    <div class="cart-total"><span>Total</span><span id="cartTotal">₹0</span></div>
+    <button class="btn-go" onclick="startCheckout()">Checkout →</button>
+  </div>
+</div>
+
+<!-- CHECKOUT OVERLAY + SHEET -->
+<div class="co-overlay" id="coOv"></div>
+<div class="co-sheet" id="coSheet">
+  <div class="co-hdr">
+    <button class="co-back" id="coBackBtn" onclick="coBack()">←</button>
+    <h5 id="coTitle">Delivery Address</h5>
+  </div>
+  <div class="co-bdy">
+    <div class="step-bar">
+      <div class="sdot act" id="sd1">1</div>
+      <div class="sline" id="sl1"></div>
+      <div class="sdot" id="sd2">2</div>
+      <div class="sline" id="sl2"></div>
+      <div class="sdot" id="sd3">3</div>
+    </div>
+
+    <!-- Step 1: Address -->
+    <div class="co-step on" id="cs1">
+      <div class="fg"><label>👤 Full Name</label><input id="a_name" placeholder="Your full name"></div>
+      <div class="fg"><label>📱 Mobile Number</label><input id="a_phone" type="tel" placeholder="10-digit number"></div>
+      <div class="fg"><label>🏠 House No / Street / Village</label><input id="a_addr" placeholder="Detailed address"></div>
+      <div class="frow">
+        <div class="fg"><label>🏘️ Mandal</label><input id="a_mandal" placeholder="Mandal"></div>
+        <div class="fg"><label>🏙️ District</label><input id="a_dist" placeholder="District"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>🗺️ State</label>
+          <select id="a_state"><option>Telangana</option><option>Andhra Pradesh</option><option>Maharashtra</option><option>Karnataka</option><option>Tamil Nadu</option><option>Uttar Pradesh</option><option>Punjab</option><option>Rajasthan</option><option>Gujarat</option></select>
+        </div>
+        <div class="fg"><label>📮 Pincode</label><input id="a_pin" type="number" placeholder="6-digit"></div>
+      </div>
+      <button class="btn-prim" onclick="goStep(2)">Continue to Payment →</button>
+    </div>
+
+    <!-- Step 2: Payment -->
+    <div class="co-step" id="cs2">
+      <div class="pay-opt on" onclick="selPay(this,'upi')">
+        <span class="pay-ico">📱</span>
+        <div><div class="pay-lbl">UPI</div><div class="pay-sub">Google Pay, PhonePe, Paytm</div></div>
+      </div>
+      <div class="pay-opt" onclick="selPay(this,'cod')">
+        <span class="pay-ico">💰</span>
+        <div><div class="pay-lbl">Cash on Delivery</div><div class="pay-sub">Pay when product arrives</div></div>
+      </div>
+      <div class="pay-opt" onclick="selPay(this,'netbanking')">
+        <span class="pay-ico">🏦</span>
+        <div><div class="pay-lbl">Net Banking</div><div class="pay-sub">SBI, HDFC, ICICI, Axis & more</div></div>
+      </div>
+      <div class="pay-opt" onclick="selPay(this,'card')">
+        <span class="pay-ico">💳</span>
+        <div><div class="pay-lbl">Debit / Credit Card</div><div class="pay-sub">Visa, Mastercard, RuPay</div></div>
+      </div>
+      <div class="fg" id="upiField" style="margin-top:6px;"><label>UPI ID</label><input placeholder="yourname@okicici"></div>
+      <div style="display:flex;gap:9px;margin-top:6px;">
+        <button class="btn-sec" style="flex:1;" onclick="goStep(1)">← Back</button>
+        <button class="btn-prim" style="flex:2;margin-top:0;" onclick="placeOrder()">Place Order 🎉</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Confirm -->
+    <div class="co-step" id="cs3">
+      <div class="confirm">
+        <div class="conf-ico">✅</div>
+        <h4>Order Placed Successfully!</h4>
+        <p>Delivery expected in 3–5 working days</p>
+        <div class="o-box" id="oBox"></div>
+        <div class="track">
+          <div class="t-step"><div class="ti">✅</div><div class="tl">Confirmed</div></div>
+          <div class="t-step dim"><div class="ti">📦</div><div class="tl">Packing</div></div>
+          <div class="t-step dim"><div class="ti">🚚</div><div class="tl">Shipped</div></div>
+          <div class="t-step dim"><div class="ti">🏠</div><div class="tl">Delivered</div></div>
+        </div>
+        <a href="tel:18001801551" class="btn-prim">📞 Contact Support</a>
+        <button class="btn-sec" onclick="closeCheckout();closeCart();">Continue Shopping</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const PRODUCTS = [
+  {id:1,cat:'seeds',e:'🌱',name:'Hybrid Tomato Seeds',brand:'MAHYCO',price:320,old:450,rating:4.8,rev:1240,catL:'Seeds',vars:['100g','250g','500g'],
+   desc:'High yield hybrid tomato. Disease resistant. Up to 80 tons/acre. Germination 95%.',
+   usage:'Sow 2cm deep, spacing 30×45cm. Water every 2 days. Harvest in 75 days.',
+   safety:'Store below 25°C. Keep away from children. Use within 12 months.',stock:250,del:'3-5',phone:'9000000001'},
+  {id:2,cat:'seeds',e:'🌶️',name:'Chilli Seeds LCA-334',brand:'NCSM',price:180,old:240,rating:4.6,rev:890,catL:'Seeds',vars:['50g','100g'],
+   desc:'Guntur special chilli. High capsaicin, deep red. 25-30 tons/acre fresh yield.',
+   usage:'Nursery sowing first, transplant at 30 days. Spacing 60×45cm.',
+   safety:'Store cool & dry. Use within 1 season.',stock:180,del:'2-4',phone:'9000000002'},
+  {id:3,cat:'seeds',e:'🫘',name:'Soybean Seeds JS-335',brand:'RASI SEEDS',price:520,old:680,rating:4.7,rev:2100,catL:'Seeds',vars:['1 kg','5 kg','10 kg'],
+   desc:'Drought tolerant soybean. 18-22 q/acre. Suitable for black and red soils.',
+   usage:'Seed treatment with Rhizobium. Spacing 45×10cm. Sow at 3cm depth.',
+   safety:'Treated seeds — do not consume. Keep away from food.',stock:420,del:'3-5',phone:'9000000003'},
+  {id:4,cat:'pesticides',e:'🧴',name:'Chlorpyrifos 20% EC',brand:'BAYER',price:450,old:580,rating:4.5,rev:3400,catL:'Pesticides',vars:['250 ml','500 ml','1 litre'],
+   desc:'Broad spectrum insecticide. Controls stem borer, aphids, whitefly in rice, cotton, vegetables.',
+   usage:'Mix 2ml/litre water. Spray 200L/acre. Repeat after 15 days.',
+   safety:'⚠️ Wear gloves and mask. Avoid skin contact. Store locked away from children.',stock:85,del:'2-4',phone:'9000000004'},
+  {id:5,cat:'pesticides',e:'🌿',name:'Neem Oil Organic 1L',brand:'BIOSTADT',price:280,old:350,rating:4.9,rev:5600,catL:'Pesticides',vars:['500 ml','1 litre','5 litre'],
+   desc:'100% organic neem oil. Controls 200+ insects. Safe for bees. WHO approved.',
+   usage:'Mix 5ml/litre + few drops liquid soap. Spray every 7 days.',
+   safety:'Organic — safe without PPE. Wash hands after use.',stock:320,del:'2-3',phone:'9000000005'},
+  {id:6,cat:'pesticides',e:'🧪',name:'Imidacloprid 17.8% SL',brand:'BAYER',price:380,old:490,rating:4.6,rev:2890,catL:'Pesticides',vars:['100 ml','250 ml','500 ml'],
+   desc:'Systemic insecticide for whitefly, thrips, aphids. Long residual 21 days.',
+   usage:'0.5ml/litre water. Foliar spray or soil drench. Avoid during flowering.',
+   safety:'⚠️ Toxic to bees. Do not spray during bloom. Wear gloves.',stock:140,del:'2-4',phone:'9000000006'},
+  {id:7,cat:'fertilizers',e:'⚗️',name:'SRUSTI NPK 19:11:11 3MgO+TE -1KG',brand:'FARMROOT',price:160,old:250,rating:4.8,rev:4100,catL:'Fertilizers',vars:['1 kilogram','3 kilogram','5 kilogram'],
+   desc:'100% water soluble NPK for all crops. 19% N, 11% P, 11% K + MgO + trace elements.',
+   usage:'Drip: 5kg/acre/month. Foliar: 5g/litre. Apply every 15 days.',
+   safety:'Keep dry. Store in cool place. Not for human consumption.',stock:600,del:'3-5',phone:'9000000007'},
+  {id:8,cat:'fertilizers',e:'🔵',name:'Accon+ - Spray Adjuvant (Pesticide/...',brand:'CROPEX',price:369,old:410,rating:4.6,rev:1850,catL:'Fertilizers',vars:['250 millilitre','500 millilitre'],
+   desc:'Spray adjuvant that improves pesticide and fertilizer absorption. Reduces spray drift 60%.',
+   usage:'Add 1ml/litre to any spray solution. Compatible with all agrochemicals.',
+   safety:'Avoid eye contact. Wash hands after use.',stock:280,del:'2-3',phone:'9000000008'},
+  {id:9,cat:'fertilizers',e:'🟡',name:'DAP Fertilizer 50kg',brand:'IFFCO',price:1350,old:1600,rating:4.9,rev:8900,catL:'Fertilizers',vars:['25 kg','50 kg'],
+   desc:'Di-Ammonium Phosphate. 18% N + 46% P. Essential for root development. Govt subsidized.',
+   usage:'50kg/acre as basal dose at planting. Mix into soil before transplanting.',
+   safety:'Not for human consumption. Store dry.',stock:800,del:'3-7',phone:'9000000009'},
+  {id:10,cat:'fertilizers',e:'🍃',name:'Vermicompost Organic 25kg',brand:'KRISHAK BIO',price:480,old:600,rating:4.8,rev:4200,catL:'Fertilizers',vars:['10 kg','25 kg','50 kg'],
+   desc:'100% organic vermicompost. Improves soil health. Slow release nutrition 6 months.',
+   usage:'Mix into topsoil before planting. 2 tons/acre recommended.',
+   safety:'Completely safe. Organic certified.',stock:890,del:'4-7',phone:'9000000010'},
+  {id:11,cat:'tools',e:'🔧',name:'Knapsack Sprayer 16L',brand:'NEPTUNE',price:1800,old:2400,rating:4.6,rev:3200,catL:'Tools',vars:['12 litre','16 litre','20 litre'],
+   desc:'16L capacity. Brass nozzle. Adjustable pressure. 5-year warranty.',
+   usage:'Fill with water + chemical. Pump 10–15 times. Spray evenly over crop.',
+   safety:'Clean after each use. Wear PPE always.',stock:95,del:'3-5',phone:'9000000011'},
+  {id:12,cat:'irrigation',e:'💧',name:'Drip Irrigation Kit 1 Acre',brand:'JAIN IRRIGATION',price:8500,old:12000,rating:4.9,rev:6700,catL:'Irrigation',vars:['0.5 acre','1 acre','2 acre'],
+   desc:'Complete drip system. Saves 60% water. Increases yield 30%. Includes mainline, laterals, drippers.',
+   usage:'Lay mainline, connect laterals, install drippers near plants. Set timer.',
+   safety:'Flush system monthly. Protect pipes from sunlight.',stock:62,del:'5-10',phone:'9000000012'},
+  {id:13,cat:'organic',e:'🌱',name:'Trichoderma Bio-Fungicide',brand:'T-STANES',price:320,old:400,rating:4.7,rev:2800,catL:'Organic',vars:['500g','1 kg','2.5 kg'],
+   desc:'Biological fungicide. Controls Fusarium, Pythium, Rhizoctonia. 10^8 CFU/g.',
+   usage:'Mix 2.5kg with 50kg FYM. Apply to soil before planting.',
+   safety:'Biological — completely safe. Avoid direct sunlight.',stock:310,del:'2-4',phone:'9000000013'},
+  {id:14,cat:'protection',e:'🧤',name:'Farmer PPE Safety Kit',brand:'SAFEAGRI',price:680,old:900,rating:4.8,rev:1900,catL:'Protection',vars:['Standard','Large','XL'],
+   desc:'Complete protection: nitrile gloves, N95 mask ×3, UV goggles, chemical-resistant apron.',
+   usage:'Wear all items before handling chemicals. Replace N95 every 8 hours.',
+   safety:'Replace torn gloves immediately. Store in a clean dry bag.',stock:220,del:'2-3',phone:'9000000014'},
+];
+
+const CAT_LABELS = {all:'All Products',seeds:'Seeds',pesticides:'Pesticides',fertilizers:'Fertilizers',tools:'Tools',irrigation:'Irrigation',organic:'Organic',protection:'Protection'};
+let activeCat='all', searchQ='', cart=[], curPay='upi', dQtys={}, coStep=1;
+
+/* ── RENDER ── */
+function render(){
+  const list = PRODUCTS.filter(p=>{
+    const catOk = activeCat==='all'||p.cat===activeCat;
+    const q = searchQ.toLowerCase();
+    const nameOk = !q||p.name.toLowerCase().includes(q)||p.brand.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q);
+    return catOk&&nameOk;
+  });
+  document.getElementById('secTitle').textContent = CAT_LABELS[activeCat]||'All Products';
+  document.getElementById('secCount').textContent = list.length+' products';
+  if(!list.length){
+    document.getElementById('prodGrid').innerHTML='<div class="no-results"><div class="nr-ico">🔍</div><p>No results found</p></div>';
+    return;
+  }
+  document.getElementById('prodGrid').innerHTML = list.map(p=>{
+    const disc = Math.round((1-p.price/p.old)*100);
+    return `<div class="p-card" onclick="openDetail(${p.id})">
+      <div class="p-img">${p.e}</div>
+      <button class="wish-btn" onclick="event.stopPropagation();this.textContent=this.textContent==='🤍'?'❤️':'🤍'">🤍</button>
+      <div class="p-info">
+        <div class="p-cat">⚗️ ${p.catL}</div>
+        <div class="p-name">${p.name}</div>
+        <div class="p-brand">${p.brand}</div>
+        <div class="p-price-row">
+          <span class="p-old">₹${p.old}</span>
+          <span class="disc-pill">-${disc}%</span>
+        </div>
+        <div class="p-from">From <b>₹${p.price}</b></div>
+        <div class="p-variants">${p.vars.join(', ')}</div>
+        <button class="p-add-btn" onclick="event.stopPropagation();quickAdd(${p.id})">+ Add to Cart</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── FILTER ── */
+function setTab(cat,el){
+  activeCat=cat; searchQ=''; document.getElementById('searchInput').value='';
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); render();
+}
+function doSearch(){
+  searchQ=document.getElementById('searchInput').value;
+  activeCat='all';
+  document.querySelectorAll('.cat-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  render();
+}
+
+/* ── DETAIL ── */
+function openDetail(id){
+  const p=PRODUCTS.find(x=>x.id===id); if(!p)return;
+  const disc=Math.round((1-p.price/p.old)*100);
+  const qty=dQtys[id]||1;
+  document.getElementById('detailContent').innerHTML=`
+    <div class="d-img">${p.e}</div>
+    <div class="d-body">
+      <div class="d-cat-lbl">${p.catL.toUpperCase()}</div>
+      <div class="d-name">${p.name}</div>
+      <div class="d-brand">${p.brand}</div>
+      <div class="d-price-card">
+        <div class="d-price-row">
+          <span class="d-price">₹${p.price}</span>
+          <span class="d-old">₹${p.old}</span>
+          <span class="d-pill">-${disc}%</span>
+        </div>
+        <div class="d-meta">
+          ⭐ ${p.rating} &nbsp;·&nbsp; ${p.rev.toLocaleString()} reviews &nbsp;·&nbsp; 🚚 ${p.del} days
+        </div>
+        <div class="d-meta d-stock">✅ ${p.stock} in stock</div>
+      </div>
+      <div class="d-var-label">Size / Quantity</div>
+      <div class="d-variants" id="dv_${id}">
+        ${p.vars.map((v,i)=>`<div class="var-chip ${i===0?'on':''}" onclick="selVar(this,${id})">${v}</div>`).join('')}
+      </div>
+      <div class="d-sec"><h6>📖 Description</h6><p>${p.desc}</p></div>
+      <div class="d-sec"><h6>🧪 Usage Instructions</h6><p>${p.usage}</p></div>
+      <div class="d-sec"><div class="safety-card"><h6>⚠️ Safety Precautions</h6><p>${p.safety}</p></div></div>
+      <div class="qty-wrap">
+        <button class="q-btn" onclick="chQty(${id},-1)">−</button>
+        <span class="q-num" id="dq_${id}">${qty}</span>
+        <button class="q-btn" onclick="chQty(${id},1)">+</button>
+      </div>
+      <div class="d-actions">
+        <button class="btn-cart-d" onclick="addToCart(${id})">🛒 Cart</button>
+        <button class="btn-buy-d" onclick="addToCart(${id});closeDetail();openCart();">⚡ Buy Now</button>
+        <a href="tel:${p.phone}" class="btn-call-d">📞</a>
+      </div>
+    </div>`;
+  document.getElementById('detailOv').classList.add('on');
+  document.getElementById('detailSheet').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeDetail(){
+  document.getElementById('detailOv').classList.remove('on');
+  document.getElementById('detailSheet').classList.remove('on');
+  document.body.style.overflow='';
+}
+function selVar(el,id){document.querySelectorAll('#dv_'+id+' .var-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+function chQty(id,d){dQtys[id]=Math.max(1,(dQtys[id]||1)+d);const e=document.getElementById('dq_'+id);if(e)e.textContent=dQtys[id];}
+
+/* ── CART ── */
+function quickAdd(id){addToCart(id);}
+function addToCart(id){
+  const p=PRODUCTS.find(x=>x.id===id), qty=dQtys[id]||1;
+  const ex=cart.find(c=>c.id===id);
+  if(ex)ex.qty+=qty; else cart.push({...p,qty});
+  updateCart(); toast('🛒 '+p.name.substring(0,22)+'… added!');
+}
+function rmFromCart(id){cart=cart.filter(c=>c.id!==id);updateCart();}
+function chCQ(id,d){const it=cart.find(c=>c.id===id);if(it){it.qty=Math.max(1,it.qty+d);updateCart();}}
+function updateCart(){
+  const count=cart.reduce((s,c)=>s+c.qty,0);
+  const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  document.getElementById('cartBadge').textContent=count;
+  document.getElementById('cartTotal').textContent='₹'+total.toLocaleString();
+  document.getElementById('cartFtr').style.display=cart.length?'block':'none';
+  const bdy=document.getElementById('cartBdy');
+  if(!cart.length){bdy.innerHTML='<div class="cart-empty">🛒 Cart is empty<br><small>Add products to get started!</small></div>';return;}
+  bdy.innerHTML=cart.map(c=>`
+    <div class="c-item">
+      <div class="c-img">${c.e}</div>
+      <div class="c-detail">
+        <div class="c-name">${c.name}</div>
+        <div class="c-brand">${c.brand}</div>
+        <div class="c-price">₹${(c.price*c.qty).toLocaleString()}</div>
+        <div class="c-qty-row">
+          <button class="cq" onclick="chCQ(${c.id},-1)">−</button>
+          <span class="cn">${c.qty}</span>
+          <button class="cq" onclick="chCQ(${c.id},1)">+</button>
+        </div>
+      </div>
+      <button class="c-rm" onclick="rmFromCart(${c.id})">🗑️</button>
+    </div>`).join('');
+}
+function openCart(){document.getElementById('cartOv').classList.add('on');document.getElementById('cartSheet').classList.add('on');document.body.style.overflow='hidden';updateCart();}
+function closeCart(){document.getElementById('cartOv').classList.remove('on');document.getElementById('cartSheet').classList.remove('on');document.body.style.overflow='';}
+
+/* ── CHECKOUT ── */
+function startCheckout(){if(!cart.length)return;closeCart();document.getElementById('coOv').classList.add('on');document.getElementById('coSheet').classList.add('on');document.body.style.overflow='hidden';goStep(1);}
+function closeCheckout(){document.getElementById('coOv').classList.remove('on');document.getElementById('coSheet').classList.remove('on');document.body.style.overflow='';}
+function coBack(){if(coStep>1)goStep(coStep-1);else closeCheckout();}
+function goStep(n){
+  coStep=n;
+  [1,2,3].forEach(i=>{
+    document.getElementById('cs'+i).classList.toggle('on',i===n);
+    const d=document.getElementById('sd'+i);
+    d.className='sdot'+(i<n?' done':i===n?' act':'');
+  });
+  document.getElementById('sl1').className='sline'+(n>1?' done':'');
+  document.getElementById('sl2').className='sline'+(n>2?' done':'');
+  const titles={1:'Delivery Address',2:'Payment Method',3:'Order Confirmed!'};
+  document.getElementById('coTitle').textContent=titles[n];
+  document.getElementById('coBackBtn').style.display=n===3?'none':'flex';
+  if(n===2){
+    if(!document.getElementById('a_name').value.trim()||!document.getElementById('a_phone').value.trim()||!document.getElementById('a_addr').value.trim()||!document.getElementById('a_pin').value.trim()){
+      alert('Please fill all required fields');coStep=1;goStep(1);return;
+    }
+    if(!/^\d{10}$/.test(document.getElementById('a_phone').value.trim())){alert('Enter valid 10-digit mobile');coStep=1;goStep(1);return;}
+  }
+}
+function selPay(el,m){document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('on'));el.classList.add('on');curPay=m;document.getElementById('upiField').style.display=m==='upi'?'block':'none';}
+function placeOrder(){
+  const oid='AGR'+Date.now().toString().slice(-8);
+  const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const items=cart.map(c=>c.name.substring(0,20)+'×'+c.qty).join(', ');
+  const dd=new Date(Date.now()+5*864e5).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('oBox').innerHTML=`<b>Order ID:</b> #${oid}<br><b>Items:</b> ${items}<br><b>Total:</b> ₹${total.toLocaleString()}<br><b>Payment:</b> ${curPay.toUpperCase()}<br><b>Est. Delivery:</b> ${dd}`;
+  cart=[]; updateCart(); goStep(3);
+}
+
+/* ── TOAST ── */
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}🔬 Disease Detection{% endblock %}
+{% block content %}
+<style>
+:root{--red:#e63946;--orange:#f4a261;--green:#2d6a4f;--sage:#52b788;--mint:#b7e4c7;--sky:#4895ef;--card-shadow:0 4px 20px rgba(0,0,0,0.08);}
+body{background:#f8fdf8;}
+.hero{background:linear-gradient(135deg,#7b2d8b,#9c27b0,#ce93d8);color:#fff;border-radius:20px;padding:32px;margin-bottom:28px;position:relative;overflow:hidden;}
+.hero::before{content:'🔬';position:absolute;right:20px;top:5px;font-size:100px;opacity:0.13;}
+.card-m{background:#fff;border-radius:18px;box-shadow:var(--card-shadow);margin-bottom:22px;overflow:hidden;}
+.card-m .head{padding:16px 22px;border-bottom:1px solid #f3e5f5;background:#fdf6ff;}
+.card-m .head h5{font-weight:700;color:#7b2d8b;margin:0;font-size:0.95rem;}
+.card-m .body{padding:22px;}
+.sec-title{font-weight:700;color:var(--green);border-left:4px solid var(--sage);padding-left:12px;margin-bottom:16px;font-size:0.95rem;}
+
+/* Upload */
+.upload-zone{border:2.5px dashed #ce93d8;border-radius:16px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;background:#fdf6ff;}
+.upload-zone:hover{border-color:#9c27b0;background:#f8edff;}
+.upload-zone.has-file{border-color:var(--sage);background:#f0fff4;}
+.btn-detect{background:linear-gradient(135deg,#7b2d8b,#9c27b0);color:#fff;border:none;border-radius:14px;padding:13px;width:100%;font-size:1rem;font-weight:700;cursor:pointer;margin-top:14px;transition:all .2s;}
+.btn-detect:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(123,45,139,0.4);}
+
+/* Disease result header */
+.disease-header{background:linear-gradient(135deg,#4a0072,#7b2d8b);color:#fff;border-radius:18px;padding:24px;margin-bottom:22px;}
+.disease-name{font-size:1.8rem;font-weight:800;margin-bottom:4px;}
+.disease-cause{opacity:0.85;font-size:0.88rem;}
+
+/* Confidence bar */
+.conf-track{height:14px;background:rgba(255,255,255,0.2);border-radius:7px;overflow:hidden;margin:8px 0;}
+.conf-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,#a5d6a7,#66bb6a);transition:width 1s ease;}
+.conf-label{font-size:0.78rem;opacity:0.9;}
+
+/* {{ t('severity_lbl') }} */
+.sev-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 18px;border-radius:25px;font-weight:800;font-size:0.88rem;}
+.sev-mild    {background:#e8f5e9;color:#2d6a4f;}
+.sev-moderate{background:#fff3e0;color:#e65100;}
+.sev-severe  {background:#fdecea;color:#c62828;}
+.sev-bar-wrap{margin-top:12px;}
+.sev-track{height:10px;background:#e0e0e0;border-radius:5px;overflow:hidden;}
+.sev-fill-mild    {background:linear-gradient(90deg,#52b788,#2d6a4f);}
+.sev-fill-moderate{background:linear-gradient(90deg,#ffa726,#ef6c00);}
+.sev-fill-severe  {background:linear-gradient(90deg,#ef5350,#b71c1c);}
+
+/* Cost estimate */
+.cost-box{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:2px solid var(--mint);border-radius:14px;padding:18px;text-align:center;}
+.cost-val{font-size:1.5rem;font-weight:800;color:var(--green);}
+.cost-lbl{font-size:0.75rem;color:#666;margin-top:2px;}
+
+/* Affected crops */
+.crop-chip{display:inline-flex;align-items:center;gap:5px;background:#fdecea;color:#c62828;padding:5px 14px;border-radius:20px;font-size:0.82rem;font-weight:600;margin:4px;}
+
+/* Spray schedule */
+.spray-timeline{position:relative;padding-left:28px;}
+.spray-timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#9c27b0,#ce93d8);}
+.spray-step{position:relative;margin-bottom:18px;}
+.spray-step::before{content:'';position:absolute;left:-22px;top:6px;width:12px;height:12px;border-radius:50%;background:#9c27b0;border:2px solid #fff;box-shadow:0 0 0 2px #9c27b0;}
+.spray-day{font-size:0.72rem;font-weight:800;color:#9c27b0;text-transform:uppercase;letter-spacing:0.5px;}
+.spray-action{font-weight:600;font-size:0.88rem;color:#1a1a2e;margin:2px 0;}
+.spray-product{font-size:0.78rem;color:#666;background:#f3e5f5;padding:3px 10px;border-radius:8px;display:inline-block;}
+.spray-time{font-size:0.72rem;color:#9c27b0;font-weight:600;margin-top:3px;}
+
+/* Treatment tabs */
+.t-tabs{display:flex;gap:4px;border-bottom:2px solid #f3e5f5;margin-bottom:18px;}
+.t-tab{border:none;background:none;padding:9px 18px;font-weight:600;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;font-size:0.85rem;transition:all .2s;}
+.t-tab.active{color:#7b2d8b;border-bottom-color:#9c27b0;}
+.t-content{display:none;}
+.t-content.active{display:block;}
+
+/* WhatsApp */
+.whatsapp-btn{background:#25d366;color:#fff;border:none;border-radius:25px;padding:11px 28px;font-weight:700;font-size:0.9rem;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s;text-decoration:none;}
+.whatsapp-btn:hover{background:#128c7e;transform:scale(1.03);}
+
+/* History */
+.hist-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f3e5f5;}
+.hist-item:last-child{border-bottom:none;}
+.hist-img{width:48px;height:48px;border-radius:10px;object-fit:cover;background:#f3e5f5;}
+.hist-badge{font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:10px;}
+
+/* Form */
+.form-control,.form-select{border-radius:10px;border:2px solid #f3e5f5;padding:10px 14px;font-size:0.88rem;}
+.form-control:focus,.form-select:focus{border-color:#ce93d8;box-shadow:0 0 0 3px rgba(156,39,176,0.15);}
+.form-label{font-weight:600;color:#444;font-size:0.85rem;margin-bottom:5px;}
+</style>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="row align-items-center">
+    <div class="col-md-9">
+      <h2 style="font-weight:800;font-size:1.9rem;margin-bottom:4px;">🔬 Plant Disease Detection</h2>
+      <p style="opacity:0.85;margin:0;">{{ t('disease_prediction') }} - {{ t('ai_confidence') }} | {{ t('spray_schedule') }} | WhatsApp</p>
+    </div>
+    <div class="col-md-3 text-end">
+      {% if result %}
+      <a href="https://wa.me/?text={{ result.wa_text | urlencode }}" target="_blank" class="whatsapp-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        {{ t('share_whatsapp') }}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+<div class="col-md-4">
+
+  <!-- UPLOAD FORM -->
+  <div class="card-m">
+    <div class="head"><h5>{{ t('upload_leaf_img') }}</h5></div>
+    <div class="body">
+      <form method="POST" enctype="multipart/form-data">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('leafFile').click()">
+          <div style="font-size:2.5rem;">🌿</div>
+          <div style="font-weight:700;margin:8px 0 4px;">{{ t('click_upload') }}</div>
+          <div style="font-size:0.8rem;color:#888;">JPG, PNG, WEBP</div>
+          <input type="file" id="leafFile" name="leaf_image" accept="image/*" style="display:none;" onchange="previewImage(this)">
+        </div>
+        <div id="previewWrap" style="display:none;margin-top:12px;">
+          <img id="previewImg" src="" style="width:100%;border-radius:12px;max-height:180px;object-fit:cover;">
+        </div>
+        <button type="submit" class="btn-detect">{{ t('detect_btn') }}</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  {% if history %}
+  <div class="card-m">
+    <div class="head"><h5>{{ t('recent_detections') }}</h5></div>
+    <div class="body" style="padding:16px 22px;">
+      {% for h in history %}
+      <div class="hist-item">
+        <img src="{{ url_for('static', filename='uploads/'+h.image_path) }}" class="hist-img" onerror="this.src='/static/placeholder.png'">
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.85rem;">{{h.disease_name}}</div>
+          <div style="font-size:0.72rem;color:#888;">{{h.created_at.strftime('%d %b %Y')}}</div>
+        </div>
+        <span class="hist-badge bg-danger text-white">{{h.confidence}}%</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+<div class="col-md-8">
+
+{% if result %}
+
+  <!-- DISEASE RESULT HEADER -->
+  <div class="disease-header">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <div class="disease-name">{{result.disease_name}}</div>
+        <div class="disease-cause">🧫 {{result.cause}}</div>
+
+        <!-- Confidence Bar -->
+        <div style="margin-top:14px;">
+          <div class="conf-label">{{ t('ai_confidence') }}</div>
+          <div class="conf-track">
+            <div class="conf-fill" style="width:{{result.confidence}}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;opacity:0.85;">
+            <span>0%</span><span style="font-weight:800;font-size:0.9rem;">{{result.confidence}}% Confident</span><span>100%</span>
+          </div>
+        </div>
+
+        <!-- {{ t('severity_lbl') }} -->
+        <div style="margin-top:14px;">
+          <span class="sev-badge sev-{{result.severity|lower}}">
+            {{result.severity_icon}} {{result.severity}} {{ t('severity_lbl') }}
+          </span>
+          <div class="sev-bar-wrap">
+            <div class="sev-track">
+              <div class="sev-fill-{{result.severity|lower}}" style="height:10px;width:{{result.severity_pct}}%;border-radius:5px;transition:width 1s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 text-center">
+        <img src="{{url_for('static',filename='uploads/'+result.image)}}" class="img-fluid rounded-3" style="max-height:140px;border:3px solid rgba(255,255,255,0.3);">
+      </div>
+    </div>
+  </div>
+
+  <!-- COST + AFFECTED CROPS -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="cost-box">
+        <div style="font-size:1.3rem;margin-bottom:4px;">💰</div>
+        <div class="cost-val">
+          {% if result.treatment_cost %}
+          ₹{{result.treatment_cost.min}}–{{result.treatment_cost.max}}
+          {% else %}—{% endif %}
+        </div>
+        <div class="cost-lbl">{{ t('est_treatment_cost') }}<br>{{result.treatment_cost.unit if result.treatment_cost else ''}}</div>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="card-m" style="margin:0;height:100%;">
+        <div class="body" style="padding:16px;">
+          <div class="sec-title" style="margin-bottom:10px;">{{ t('also_affects') }}</div>
+          <div>
+            {% for crop in result.affected_crops %}
+            <span class="crop-chip">⚠️ {{crop}}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TREATMENT TABS -->
+  <div class="card-m">
+    <div class="body">
+      <div class="t-tabs">
+        <button class="t-tab active" onclick="showT('chemical',this)">{{ t('chemical_treatment') }}</button>
+        <button class="t-tab" onclick="showT('organic',this)">{{ t('organic_option_tab') }}</button>
+        <button class="t-tab" onclick="showT('prevention',this)">{{ t('prevention_tab') }}</button>
+      </div>
+      <div id="t-chemical" class="t-content active">
+        <p style="font-size:0.9rem;line-height:1.7;color:#333;">{{result.treatment}}</p>
+      </div>
+      <div id="t-organic" class="t-content">
+        <p style="font-size:0.9rem;line-height:1.7;color:#333;">{{result.organic}}</p>
+      </div>
+      <div id="t-prevention" class="t-content">
+        <p style="font-size:0.9rem;line-height:1.7;color:#333;">{{result.prevention}}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPRAY SCHEDULE -->
+  {% if result.spray_schedule %}
+  <div class="card-m">
+    <div class="head"><h5>{{ t('spray_schedule') }}</h5></div>
+    <div class="body">
+      <div class="spray-timeline">
+        {% for step in result.spray_schedule %}
+        <div class="spray-step">
+          <div class="spray-day">{{step.day}}</div>
+          <div class="spray-action">{{step.action}}</div>
+          <span class="spray-product">{{step.product}}</span>
+          <div class="spray-time">⏰ {{step.time}}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- SHARE ACTIONS -->
+  <div class="card-m">
+    <div class="body">
+      <div class="sec-title">{{ t('share_actions') }}</div>
+      <div class="d-flex gap-3 flex-wrap">
+        <a href="https://wa.me/?text={{ result.wa_text | urlencode }}" target="_blank" class="whatsapp-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          {{ t('share_whatsapp') }}
+        </a>
+        <a href="{{ url_for('generate_disease_report', detection_id=result.detection_id) }}" class="btn btn-outline-danger rounded-pill px-4 fw-700">
+          {{ t('download_pdf_report') }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+{% else %}
+  <div class="text-center py-5" style="color:#888;">
+    <div style="font-size:4rem;">🌿</div>
+    <h5 style="margin-top:16px;font-weight:700;">{{ t('upload_prompt') }}</h5>
+    <p>Supports Tomato, Rice, Wheat, Soybean and more</p>
+  </div>
+{% endif %}
+
+</div>
+</div>
+
+<script>
+function previewImage(input) {
+  if(input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('previewImg').src = e.target.result;
+      document.getElementById('previewWrap').style.display = 'block';
+      document.getElementById('uploadZone').classList.add('has-file');
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function showT(tab, btn) {
+  document.querySelectorAll('.t-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.t-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('t-'+tab).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+{% endblock %}

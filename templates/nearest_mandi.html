@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% block title %}🏪 Find Nearest Mandi{% endblock %}
+{% block content %}
+<style>
+body{background:#0f1a14;}
+.nm-hero{background:linear-gradient(135deg,#1b4332,#2d6a4f);border-radius:20px;padding:28px 32px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.nm-hero-left{display:flex;align-items:center;gap:18px;}
+.nm-icon{width:70px;height:70px;background:rgba(255,255,255,.12);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.nm-title{color:#fff;font-size:1.6rem;font-weight:800;margin:0;}
+.nm-sub{color:rgba(255,255,255,.7);font-size:.9rem;margin:4px 0 0;}
+.nm-live-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:30px;padding:8px 18px;color:#fff;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px;}
+.nm-live-dot{width:9px;height:9px;border-radius:50%;background:#4ade80;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.gps-bar{background:#1a2e22;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.gps-ok{color:#4ade80;font-size:.85rem;font-weight:600;}
+.gps-wait{color:#f59e0b;font-size:.85rem;font-weight:600;}
+.gps-err{color:#f87171;font-size:.85rem;font-weight:600;}
+
+.nm-controls{background:#1a2e22;border-radius:16px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.nm-select{background:#0f1a14 !important;border:1.5px solid rgba(255,255,255,.25) !important;color:#fff !important;border-radius:10px;padding:8px 12px;font-size:.88rem;min-width:150px;}
+.nm-select option{background:#1a2e22;color:#fff;}
+.nm-search-btn{background:#2d6a4f;color:#fff;border:none;border-radius:10px;padding:9px 20px;font-weight:700;cursor:pointer;font-size:.88rem;white-space:nowrap;}
+.nm-search-btn:hover{background:#40916c;}
+
+.crop-filter{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;align-items:center;}
+.crop-filter label{color:#fff;font-weight:600;font-size:.9rem;}
+.crop-btn{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.75);border-radius:30px;padding:7px 18px;font-size:.85rem;cursor:pointer;transition:all .2s;font-weight:500;}
+.crop-btn:hover,.crop-btn.active{background:#2d6a4f;border-color:#52b788;color:#fff;}
+
+.nm-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:768px){.nm-layout{grid-template-columns:1fr;}}
+
+.nm-map{background:#1a2e22;border-radius:20px;overflow:hidden;}
+.map-area{width:100%;height:420px;position:relative;}
+.map-label{position:absolute;top:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.5);font-size:.8rem;font-weight:600;white-space:nowrap;}
+.map-legend{position:absolute;bottom:14px;left:14px;background:rgba(0,0,0,.55);border-radius:10px;padding:10px 14px;}
+.map-legend-item{display:flex;align-items:center;gap:8px;color:#fff;font-size:.75rem;margin-bottom:4px;}
+.ldot-y{width:12px;height:12px;border-radius:50%;background:#f59e0b;}
+.ldot-g{width:12px;height:12px;border-radius:50%;background:#2d6a4f;border:2px solid #52b788;}
+
+.nm-cards{display:flex;flex-direction:column;gap:12px;max-height:440px;overflow-y:auto;padding-right:4px;}
+.nm-cards::-webkit-scrollbar{width:4px;}
+.nm-cards::-webkit-scrollbar-thumb{background:#2d6a4f;border-radius:4px;}
+
+.mandi-card{background:#1a2e22;border:1.5px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s;}
+.mandi-card:hover{border-color:#52b788;background:#1f3527;}
+.mandi-card.nearest{border-color:#f59e0b;}
+.nearest-badge{background:#f59e0b;color:#333;font-size:.7rem;font-weight:800;padding:2px 10px;border-radius:20px;float:right;}
+.mandi-name{font-size:1rem;font-weight:700;color:#fff;margin:0 0 3px;}
+.mandi-loc{color:rgba(255,255,255,.5);font-size:.8rem;margin:0 0 10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.same-state-tag{background:#d1fae5;color:#065f46;font-size:.68rem;padding:1px 8px;border-radius:10px;font-weight:600;}
+.diff-state-tag{background:#fef3c7;color:#92400e;font-size:.68rem;padding:1px 8px;border-radius:10px;font-weight:600;}
+.mandi-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.dist-badge{font-size:.78rem;padding:3px 10px;border-radius:20px;font-weight:600;}
+.dist-near{background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);}
+.dist-mid{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
+.dist-far{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.3);}
+.type-badge{font-size:.7rem;padding:3px 10px;border-radius:20px;font-weight:600;}
+.type-APMC{background:#d1fae5;color:#065f46;}
+.type-Wholesale{background:#dbeafe;color:#1e40af;}
+.type-RythuBazar{background:#fce7f3;color:#9d174d;}
+.type-PrivateMarket{background:#ede9fe;color:#5b21b6;}
+.type-Cooperative{background:#fef3c7;color:#92400e;}
+
+.mandi-price{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.price-main{font-size:1.1rem;font-weight:800;color:#4ade80;}
+.price-range{font-size:.78rem;color:rgba(255,255,255,.4);margin-left:6px;}
+.price-date{font-size:.75rem;color:rgba(255,255,255,.4);}
+.nav-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:10px;padding:5px 14px;font-size:.8rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+.nav-btn:hover{background:#2d6a4f;color:#fff;border-color:#52b788;}
+
+.nm-stats-bar{background:#1a2e22;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 22px;margin-top:20px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;}
+.stat-item{color:#fff;font-size:.88rem;display:flex;align-items:center;gap:8px;}
+.stat-item strong{font-size:.95rem;}
+.nm-loading{display:flex;align-items:center;justify-content:center;height:200px;color:rgba(255,255,255,.5);flex-direction:column;gap:12px;}
+.nm-no-data{display:none;text-align:center;padding:40px;}
+</style>
+
+<!-- HERO -->
+<div class="nm-hero">
+  <div class="nm-hero-left">
+    <div class="nm-icon">🏪</div>
+    <div>
+      <h2 class="nm-title">Find Nearest Mandi</h2>
+      <p class="nm-sub" id="heroSub">📍 Showing mandis near {{ district }}, {{ state }}</p>
+    </div>
+  </div>
+  <div class="nm-live-badge">
+    <span class="nm-live-dot"></span>
+    Live Distance &amp; Prices
+  </div>
+</div>
+
+<!-- GPS BAR -->
+<div class="gps-bar">
+  <span style="font-size:1.2rem;">📡</span>
+  <span id="gpsStatus" class="gps-wait">Requesting GPS location...</span>
+  <span id="gpsCoords" style="color:rgba(255,255,255,.4);font-size:.8rem;"></span>
+  <button onclick="requestGPS()" style="margin-left:auto;background:#2d6a4f;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:.8rem;cursor:pointer;">🔄 Refresh GPS</button>
+</div>
+
+<!-- CONTROLS -->
+<div class="nm-controls">
+  <label style="color:#fff;font-weight:600;font-size:.9rem;white-space:nowrap;">📍 Location:</label>
+  <select id="stateSelect" class="nm-select" onchange="loadDistricts(this.value)">
+    {% for s in states %}
+    <option value="{{ s }}" {% if s == state %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <select id="districtSelect" class="nm-select">
+    {% for d in districts.get(state, []) %}
+    <option value="{{ d }}" {% if d == district %}selected{% endif %}>{{ d }}</option>
+    {% endfor %}
+  </select>
+  <button class="nm-search-btn" onclick="searchMandis()">🔍 Find Mandis</button>
+</div>
+
+<!-- CROP FILTER -->
+<div class="crop-filter">
+  <label>Filter by crop:</label>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <button class="crop-btn active" onclick="selectCrop(this,'Cotton')">Cotton</button>
+    <button class="crop-btn" onclick="selectCrop(this,'Paddy')">Paddy</button>
+    <button class="crop-btn" onclick="selectCrop(this,'Maize')">Maize</button>
+    <button class="crop-btn" onclick="selectCrop(this,'Onion')">Onion</button>
+    <button class="crop-btn" onclick="selectCrop(this,'Chilli')">Chilli</button>
+    <button class="crop-btn" onclick="selectCrop(this,'Tomato')">Tomato</button>
+    <button class="crop-btn" onclick="selectCrop(this,'Soybean')">Soybean</button>
+    <button class="crop-btn" onclick="selectCrop(this,'Turmeric')">Turmeric</button>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="nm-layout">
+
+  <!-- MAP -->
+  <div class="nm-map">
+    <div class="map-area">
+      <div class="map-label" id="mapLabel">{{ district }} Region — {{ state }}</div>
+      <svg id="mandiMap" width="100%" height="420" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)"/>
+        <g id="roadsGroup"></g>
+        <g id="nodesGroup"></g>
+      </svg>
+      <div class="map-legend">
+        <div class="map-legend-item"><span class="ldot-y"></span>Your location</div>
+        <div class="map-legend-item"><span class="ldot-g"></span>Mandi</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div>
+    <div id="nmLoading" class="nm-loading">
+      <div class="spinner-border text-success"></div>
+      <span style="color:rgba(255,255,255,.5);">Fetching live mandi prices...</span>
+    </div>
+    <div id="nmNoData" class="nm-no-data">
+      <div style="font-size:3rem;">🏪</div>
+      <p style="color:rgba(255,255,255,.5);">No mandi data available.<br>
+      <small>Try another crop or check back tomorrow.</small></p>
+    </div>
+    <div id="nmCards" class="nm-cards" style="display:none;"></div>
+  </div>
+
+</div>
+
+<!-- STATS BAR -->
+<div class="nm-stats-bar" id="nmStatsBar" style="display:none;">
+  <div class="stat-item">🏪 <strong id="statCount">0</strong> mandis found</div>
+  <div class="stat-item">📍 Nearest: <strong id="statNearest">—</strong></div>
+  <div class="stat-item">💰 Best price: <strong id="statBest">—</strong></div>
+  <div class="stat-item" style="margin-left:auto;color:rgba(255,255,255,.4);font-size:.78rem;">
+    Updated <span id="statTime">—</span>
+  </div>
+</div>
+
+<script>
+const ALL_DISTRICTS = {{ districts | tojson }};
+let currentCrop     = 'Cotton';
+let currentState    = '{{ state }}';
+let currentDistrict = '{{ district }}';
+let userLat         = null;
+let userLng         = null;
+let allMandis       = [];
+
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371,dL=(lat2-lat1)*Math.PI/180,dl=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dL/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dl/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*10)/10;
+}
+
+function requestGPS(){
+  const st=document.getElementById('gpsStatus');
+  const co=document.getElementById('gpsCoords');
+  st.textContent='⏳ Getting GPS...';
+  st.className='gps-wait';
+  if(!navigator.geolocation){
+    st.textContent='📍 Using district centre coordinates';
+    st.className='gps-err';
+    loadMandiData(); return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      userLat=pos.coords.latitude;
+      userLng=pos.coords.longitude;
+      st.textContent='✅ GPS active — exact distances enabled';
+      st.className='gps-ok';
+      co.textContent=`${userLat.toFixed(4)}°N  ${userLng.toFixed(4)}°E`;
+      loadMandiData();
+    },
+    ()=>{
+      st.textContent='📍 Using district centre — distances are approximate';
+      st.className='gps-wait';
+      loadMandiData();
+    },
+    {enableHighAccuracy:true,timeout:8000}
+  );
+}
+
+function loadDistricts(state){
+  const sel=document.getElementById('districtSelect');
+  sel.innerHTML='';
+  (ALL_DISTRICTS[state]||[]).forEach(d=>{
+    const opt=document.createElement('option');
+    opt.value=d; opt.textContent=d;
+    sel.appendChild(opt);
+  });
+}
+
+function selectCrop(btn,crop){
+  document.querySelectorAll('.crop-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCrop=crop;
+  loadMandiData();
+}
+
+function searchMandis(){
+  currentState=document.getElementById('stateSelect').value;
+  currentDistrict=document.getElementById('districtSelect').value;
+  document.getElementById('heroSub').textContent=
+    `📍 Showing mandis near ${currentDistrict}, ${currentState}`;
+  document.getElementById('mapLabel').textContent=
+    `${currentDistrict} Region — ${currentState}`;
+  loadMandiData();
+}
+
+async function loadMandiData(){
+  document.getElementById('nmLoading').style.display='flex';
+  document.getElementById('nmCards').style.display='none';
+  document.getElementById('nmNoData').style.display='none';
+  document.getElementById('nmStatsBar').style.display='none';
+  clearMap();
+
+  try{
+    const res=await fetch(
+      `/api/nearest-mandi/${encodeURIComponent(currentCrop)}/`+
+      `${encodeURIComponent(currentState)}/`+
+      `${encodeURIComponent(currentDistrict)}`
+    );
+    const data=await res.json();
+    allMandis=data.mandis||[];
+
+    // If GPS active, recalculate with real coordinates
+    if(userLat!==null && userLng!==null){
+      allMandis.forEach(m=>{
+        if(m.lat && m.lng){
+          m.distance_km=haversine(userLat,userLng,m.lat,m.lng);
+          m.gps_dist=true;
+        }
+      });
+      allMandis.sort((a,b)=>(a.distance_km||9999)-(b.distance_km||9999));
+    }
+
+    document.getElementById('nmLoading').style.display='none';
+
+    if(!allMandis.length){
+      document.getElementById('nmNoData').style.display='block';
+      return;
+    }
+
+    renderCards(allMandis);
+    renderMap(allMandis);
+    renderStatsBar(allMandis);
+
+  }catch(e){
+    document.getElementById('nmLoading').style.display='none';
+    document.getElementById('nmNoData').style.display='block';
+  }
+}
+
+function getDistClass(km){
+  if(km===null||km===undefined) return 'dist-mid';
+  if(km<100)  return 'dist-near';
+  if(km<300)  return 'dist-mid';
+  return 'dist-far';
+}
+
+function renderCards(mandis){
+  const c=document.getElementById('nmCards');
+  c.innerHTML='';
+  mandis.forEach((m,i)=>{
+    const isNearest=i===0;
+    const typeClass='type-'+(m.type||'APMC').replace(/\s/g,'');
+    const distKm=typeof m.distance_km==='number'?m.distance_km:null;
+    const distLabel=distKm!==null?`${distKm} km`:'— km';
+    const distClass=getDistClass(distKm);
+    const distIcon=m.gps_dist?'📡':'📏';
+    const mapsUrl=m.lat&&m.lng
+      ?`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}`
+      :`https://www.google.com/maps/search/${encodeURIComponent(m.mandi||'')}`;
+    const stateTag=m.same_state
+      ?`<span class="same-state-tag">✓ ${m.state}</span>`
+      :`<span class="diff-state-tag">📍 ${m.state}</span>`;
+
+    c.innerHTML+=`
+      <div class="mandi-card ${isNearest?'nearest':''}" onclick="highlightNode(${i})">
+        ${isNearest?'<span class="nearest-badge">Nearest</span>':''}
+        <div class="mandi-name">${i===0?'🏆':i===1?'🥈':'🌾'} ${m.mandi}</div>
+        <div class="mandi-loc">📍 ${m.district} ${stateTag}</div>
+        <div class="mandi-meta">
+          <span class="dist-badge ${distClass}">${distIcon} ${distLabel}</span>
+          <span class="type-badge ${typeClass}">${m.type}</span>
+        </div>
+        <div class="mandi-price">
+          <div>
+            <span class="price-main">₹${m.modal}/kg</span>
+            <span class="price-range">(₹${m.min}–₹${m.max})</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="price-date">${m.date}</span>
+            <a href="${mapsUrl}" target="_blank" class="nav-btn">🗺️ Navigate</a>
+          </div>
+        </div>
+      </div>`;
+  });
+  c.style.display='flex';
+}
+
+const NODE_POS=[
+  {x:50,y:30},{x:32,y:44},{x:68,y:40},{x:22,y:60},
+  {x:55,y:64},{x:76,y:54},{x:38,y:74},{x:72,y:74},
+];
+
+function renderMap(mandis){
+  const svg=document.getElementById('mandiMap');
+  const W=svg.clientWidth||400,H=svg.clientHeight||420;
+  const roads=document.getElementById('roadsGroup');
+  const nodes=document.getElementById('nodesGroup');
+  roads.innerHTML=nodes.innerHTML='';
+  const cx=W*0.5,cy=H*0.48;
+
+  nodes.innerHTML+=`
+    <circle cx="${cx}" cy="${cy}" r="13" fill="#f59e0b" opacity=".9"/>
+    <text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#333" font-size="10" font-weight="800">You</text>`;
+
+  mandis.slice(0,8).forEach((m,i)=>{
+    const p=NODE_POS[i]||{x:30+(i*10)%70,y:30+(i*8)%60};
+    const nx=W*p.x/100,ny=H*p.y/100;
+    const col=m.same_state?'#2d6a4f':'#1d4ed8';
+    const sc=m.same_state?'#52b788':'rgba(255,255,255,0.3)';
+    const distTxt=typeof m.distance_km==='number'?`${m.distance_km}km`:'';
+
+    roads.innerHTML+=`
+      <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}"
+            stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="5,4"/>`;
+    nodes.innerHTML+=`
+      <g onclick="highlightNode(${i})" style="cursor:pointer;">
+        <rect x="${nx-26}" y="${ny-14}" width="52" height="22" rx="11"
+              fill="${col}" stroke="${sc}" stroke-width="1.5"/>
+        <text x="${nx}" y="${ny+4}" text-anchor="middle" fill="#fff"
+              font-size="11" font-weight="700">₹${m.modal}</text>
+        <circle cx="${nx+22}" cy="${ny-14}" r="9" fill="#1a2e22"
+                stroke="${sc}" stroke-width="1.5"/>
+        <text x="${nx+22}" y="${ny-10}" text-anchor="middle"
+              fill="rgba(255,255,255,.7)" font-size="9">${i+1}</text>
+        <text x="${nx}" y="${ny+28}" text-anchor="middle"
+              fill="rgba(255,255,255,.4)" font-size="8">${distTxt}</text>
+      </g>`;
+  });
+}
+
+function clearMap(){
+  document.getElementById('roadsGroup').innerHTML='';
+  document.getElementById('nodesGroup').innerHTML='';
+}
+
+function highlightNode(idx){
+  const cards=document.querySelectorAll('.mandi-card');
+  if(!cards[idx])return;
+  cards[idx].scrollIntoView({behavior:'smooth',block:'nearest'});
+  cards.forEach(c=>c.style.outline='');
+  cards[idx].style.outline='2px solid #52b788';
+  setTimeout(()=>{if(cards[idx])cards[idx].style.outline='';},2000);
+}
+
+function renderStatsBar(mandis){
+  const nearest=mandis[0];
+  const best=[...mandis].sort((a,b)=>b.modal-a.modal)[0];
+  const nd=typeof nearest.distance_km==='number'?`${nearest.distance_km} km`:'—';
+  document.getElementById('statCount').textContent=mandis.length;
+  document.getElementById('statNearest').textContent=nd;
+  document.getElementById('statBest').textContent=`₹${best.modal}/kg at ${best.mandi}`;
+  document.getElementById('statTime').textContent=
+    new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('nmStatsBar').style.display='flex';
+}
+
+window.addEventListener('DOMContentLoaded', requestGPS);
+</script>
+{% endblock %}

@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero" style="background:linear-gradient(135deg,#1b1b2f,#2d2d5e);border-radius:0 0 30px 30px;">
+  <div class="page-container"><h1>⚙️ {{ t('admin_panel') }}</h1><p>Manage farmers, schemes, market prices & help messages</p></div>
+</div>
+<div class="page-container">
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-box"><div class="stat-number">{{ farmers|length }}</div><div style="font-size:.82rem;color:#888;">Total Farmers</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-box"><div class="stat-number">{{ total_analyses }}</div><div style="font-size:.82rem;color:#888;">Soil Analyses</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-box"><div class="stat-number">{{ total_detections }}</div><div style="font-size:.82rem;color:#888;">Disease Detections</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-box"><div class="stat-number" style="color:#c1121f;">{{ unread }}</div><div style="font-size:.82rem;color:#888;">Unread Messages</div></div></div>
+  </div>
+
+  <!-- TABS -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#farmersTab" style="font-weight:600;color:#2d6a4f;">👨‍🌾 Farmers</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#messagesTab" style="font-weight:600;color:#2d6a4f;">📨 Messages {% if unread > 0 %}<span style="background:#e63946;color:white;border-radius:50%;padding:1px 6px;font-size:.7rem;">{{ unread }}</span>{% endif %}</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#schemesTab" style="font-weight:600;color:#2d6a4f;">🏛️ Add Scheme</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#pricesTab" style="font-weight:600;color:#2d6a4f;">💰 Market Prices</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#storiesTab" style="font-weight:600;color:#2d6a4f;">🌾 Farmer Stories</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- FARMERS -->
+    <div class="tab-pane fade show active" id="farmersTab">
+      <div class="card">
+        <div class="card-body p-0">
+          <div style="overflow-x:auto;">
+            <table class="table table-hover mb-0" style="font-size:.88rem;">
+              <thead style="background:#f5f9f5;"><tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>State</th><th>District</th><th>Language</th><th>Joined</th></tr></thead>
+              <tbody>
+                {% for f in farmers %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td><strong>{{ f.name }}</strong>{% if f.is_admin %} <span style="background:#ffd700;color:#333;border-radius:4px;padding:1px 6px;font-size:.72rem;">ADMIN</span>{% endif %}</td>
+                  <td>{{ f.phone }}</td><td>{{ f.email }}</td><td>{{ f.state }}</td><td>{{ f.district }}</td>
+                  <td><span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:2px 8px;font-size:.75rem;">{{ f.language.upper() }}</span></td>
+                  <td>{{ f.created_at.strftime('%d %b %Y') }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="tab-pane fade" id="messagesTab">
+      {% for msg in messages %}
+      <div class="card mb-3" style="border-left:4px solid {% if msg.is_read %}#40916c{% else %}#c1121f{% endif %};">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <strong>{{ msg.name }}</strong> — <span style="color:#0077b6;">{{ msg.email }}</span>
+              {% if not msg.is_read %}<span style="background:#f8d7da;color:#c1121f;border-radius:10px;padding:2px 8px;font-size:.72rem;margin-left:8px;">UNREAD</span>{% endif %}
+            </div>
+            <small style="color:#888;">{{ msg.created_at.strftime('%d %b %Y %H:%M') }}</small>
+          </div>
+          <p style="color:#888;font-size:.82rem;margin-bottom:.3rem;"><strong>Subject:</strong> {{ msg.subject or 'General Query' }}</p>
+          <p style="color:#333;font-size:.9rem;margin-bottom:.8rem;">{{ msg.message }}</p>
+          {% if msg.reply %}
+          <div style="background:#f0faf4;border-radius:8px;padding:.7rem;border-left:3px solid #40916c;margin-bottom:.8rem;font-size:.85rem;"><strong style="color:#2d6a4f;">✅ Reply:</strong> {{ msg.reply }}</div>
+          {% endif %}
+          <div class="d-flex gap-2">
+            {% if not msg.is_read %}<a href="{{ url_for('mark_read', msg_id=msg.id) }}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.8rem;">Mark Read</a>{% endif %}
+            <button class="btn btn-sm btn-green" style="font-size:.8rem;" onclick="document.getElementById('replyForm{{msg.id}}').style.display='block'">Reply</button>
+          </div>
+          <form method="POST" action="{{ url_for('reply_message', msg_id=msg.id) }}" id="replyForm{{msg.id}}" style="display:none;margin-top:.7rem;">
+            <textarea name="reply" class="form-control mb-2" rows="2" placeholder="Type your reply..." style="font-size:.88rem;border-radius:10px;"></textarea>
+            <button type="submit" class="btn-green" style="font-size:.82rem;padding:8px 18px;">Send Reply</button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:3rem;color:#888;"><div style="font-size:3rem;">📭</div><p>No messages yet</p></div>
+      {% endfor %}
+    </div>
+
+    <!-- ADD SCHEME -->
+    <div class="tab-pane fade" id="schemesTab">
+      <div class="card">
+        <div class="card-header"><h5>➕ Add New Government Scheme</h5></div>
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('add_scheme') }}">
+            <div class="row g-3">
+              <div class="col-md-12"><label class="form-label">Scheme Name (English)</label><input type="text" name="name" class="form-control" required></div>
+              <div class="col-md-6"><label class="form-label">Hindi Name (हिंदी नाम)</label><input type="text" name="name_hi" class="form-control"></div>
+              <div class="col-md-6"><label class="form-label">Telugu Name (తెలుగు పేరు)</label><input type="text" name="name_te" class="form-control"></div>
+              <div class="col-md-4">
+                <label class="form-label">Type</label>
+                <select name="scheme_type" class="form-select"><option value="central">Central Government</option><option value="state">State Government</option></select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                  <option>Financial Aid</option><option>Crop Insurance</option><option>Loans & Credit</option>
+                  <option>Water & Irrigation</option><option>Pension</option><option>Market Access</option>
+                  <option>Organic Farming</option><option>Life Insurance</option><option>Soil Testing</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">State (or All)</label>
+                <input type="text" name="state" class="form-control" value="All">
+              </div>
+              <div class="col-12"><label class="form-label">Description (English)</label><textarea name="description" class="form-control" rows="3" required></textarea></div>
+              <div class="col-12"><label class="form-label">Hindi Description</label><textarea name="description_hi" class="form-control" rows="2"></textarea></div>
+              <div class="col-12"><label class="form-label">Telugu Description</label><textarea name="description_te" class="form-control" rows="2"></textarea></div>
+              <div class="col-md-6"><label class="form-label">Benefits</label><input type="text" name="benefit" class="form-control" required></div>
+              <div class="col-md-6"><label class="form-label">Eligibility</label><input type="text" name="eligibility" class="form-control" required></div>
+              <div class="col-12"><label class="form-label">How to Apply</label><textarea name="how_to_apply" class="form-control" rows="2"></textarea></div>
+              <div class="col-md-6"><label class="form-label">Required Documents</label><input type="text" name="documents" class="form-control" placeholder="Aadhaar, Land records, Bank passbook"></div>
+              <div class="col-md-4"><label class="form-label">Official Link</label><input type="url" name="official_link" class="form-control" placeholder="https://"></div>
+              <div class="col-md-2"><label class="form-label">Last Date</label><input type="text" name="last_date" class="form-control" placeholder="Ongoing"></div>
+              <div class="col-12"><button type="submit" class="btn-green">➕ Add Scheme</button></div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARKET PRICES -->
+    <div class="tab-pane fade" id="pricesTab">
+      <div class="card">
+        <div class="card-header"><h5>💰 Update Market Prices</h5></div>
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('update_price') }}">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-3"><label class="form-label">Crop Name</label><input type="text" name="crop_name" class="form-control" placeholder="e.g. Tomato" required></div>
+              <div class="col-md-3"><label class="form-label">Price per kg (₹)</label><input type="number" name="price" class="form-control" step="0.5" required></div>
+              <div class="col-md-3"><label class="form-label">Demand Level</label><select name="demand" class="form-select"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+              <div class="col-md-3"><button type="submit" class="btn-green w-100">Update Price</button></div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  <!-- FARMER STORIES -->
+    <div class="tab-pane fade" id="storiesTab">
+
+      <!-- ADD STORY FORM -->
+      <div class="card mb-4">
+        <div class="card-header"><h5>🌾 Add Real Farmer Success Story</h5></div>
+        <div class="card-body p-4">
+          <form method="POST" action="/admin/add-story" enctype="multipart/form-data">
+            <div class="row g-3">
+
+              <div class="col-md-4">
+                <label class="form-label">👨‍🌾 Farmer Name</label>
+                <input type="text" name="farmer_name" class="form-control"
+                       placeholder="e.g. Chunchu Ramesh" required>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">📍 District</label>
+                <select name="district" class="form-select" required>
+                  <option value="">Select District</option>
+                  {% for state, dists in districts.items() %}
+                  <optgroup label="{{ state }}">
+                    {% for d in dists %}
+                    <option value="{{ d }}">{{ d }}</option>
+                    {% endfor %}
+                  </optgroup>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">🌾 Crop Grown</label>
+                <input type="text" name="crop" class="form-control"
+                       placeholder="e.g. Cotton" required>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">📐 Acres Farmed</label>
+                <input type="number" name="acres" class="form-control"
+                       placeholder="e.g. 20" min="0.5" step="0.5">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">💰 Profit Earned</label>
+                <input type="text" name="profit" class="form-control"
+                       placeholder="e.g. ₹7,00,000">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">🌤️ Season</label>
+                <select name="season" class="form-select">
+                  <option value="Kharif">Kharif (June-Oct)</option>
+                  <option value="Rabi">Rabi (Nov-Mar)</option>
+                  <option value="Zaid">Zaid (Apr-Jun)</option>
+                </select>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">⭐ Likes</label>
+                <input type="number" name="likes" class="form-control" value="25" min="1">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">💬 Farmer's Story</label>
+                <textarea name="story" class="form-control" rows="3"
+                  placeholder="మంచిర్యాల్లో 20 ఎకరాల పత్తి సాగు చేశాను. ₹7,00,000 లాభం వచ్చింది. స్మార్ట్ అగ్రికల్చర్ యాప్ చాలా సహాయపడింది."></textarea>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">📸 Farmer / Field Photo</label>
+                <input type="file" name="farmer_photo" class="form-control" accept="image/*">
+                <div class="mb-3">
+                <label class="form-label fw-600">📹 Farm Video (optional)</label>
+                <input type="file" name="farmer_video" accept="video/*" class="form-control">
+                <small class="text-muted">MP4, MOV, AVI — max 16MB</small>
+                </div>
+                <small class="text-muted">Upload photo of farmer standing in their field</small>
+              </div>
+
+              <div class="col-12">
+                <button type="submit" class="btn-green px-4">🌾 Add Farmer Story</button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- EXISTING STORIES LIST -->
+      <div class="card">
+        <div class="card-header"><h5>📋 Existing Stories ({{ farmer_stories|length }})</h5></div>
+        <div class="card-body p-0">
+          <div style="overflow-x:auto;">
+            <table class="table table-hover mb-0" style="font-size:.88rem;">
+              <thead style="background:#f5f9f5;">
+                <tr>
+                  <th>Photo</th>
+                  <th>Farmer</th>
+                  <th>District</th>
+                  <th>Crop</th>
+                  <th>Story</th>
+                  <th>Likes</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for story in farmer_stories %}
+                <tr>
+                  <td>
+                    {% if story.image_path %}
+                    <img src="{{ url_for('static', filename='uploads/' + story.image_path) }}"
+                         style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #40916c;">
+                    {% else %}
+                    <span style="font-size:2rem;">👨‍🌾</span>
+                    {% endif %}
+                  </td>
+                  <td><strong>{{ story.farmer.name if story.farmer else '—' }}</strong></td>
+                  <td>{{ story.district }}</td>
+                  <td>
+                    <span style="background:#e8f5e9;color:#2d6a4f;padding:2px 10px;border-radius:10px;font-size:.8rem;">
+                      {{ story.crop }}
+                    </span>
+                  </td>
+                  <td style="max-width:220px;font-size:.82rem;color:#555;">
+                    {{ story.body[:80] + '...' if story.body and story.body|length > 80 else story.body or '—' }}
+                  </td>
+                  <td>❤️ {{ story.likes }}</td>
+                  <td>
+                    <a href="/admin/delete-story/{{ story.id }}"
+                       class="btn btn-sm btn-danger rounded-pill"
+                       onclick="return confirm('Delete this story?')">🗑️</a>
+                  </td>
+                </tr>
+                {% endfor %}
+                {% if not farmer_stories %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-5">
+                    <div style="font-size:2.5rem;">🌾</div>
+                    <p>No stories yet. Add your first family farmer story above!</p>
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- END FARMER STORIES TAB -->
+
+  </div>
+</div>
+{% endblock %}

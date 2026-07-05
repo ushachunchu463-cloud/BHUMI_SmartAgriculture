@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero" style="background:linear-gradient(135deg,#3a0ca3,#6f42c1,#9b59b6);border-radius:0 0 30px 30px;">
+  <div class="page-container"><h1>🏛️ {{ t('schemes') }}</h1><p>Central & State Government schemes designed to support Indian farmers</p></div>
+</div>
+<div class="page-container">
+  <div class="card mb-4">
+    <div class="card-body p-3">
+      <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label" style="color:#6f42c1;">🔍 Search</label><input type="text" name="search" class="form-control" placeholder="{{ t('search_schemes') }}" value="{{ search }}"></div>
+        <div class="col-md-3"><label class="form-label" style="color:#6f42c1;">Type</label>
+          <select name="type" class="form-select">
+            <option value="all" {% if selected_type=='all' %}selected{% endif %}>All</option>
+            <option value="central" {% if selected_type=='central' %}selected{% endif %}>{{ t('central_govt') }}</option>
+            <option value="state" {% if selected_type=='state' %}selected{% endif %}>{{ t('state_govt') }}</option>
+          </select>
+        </div>
+        <div class="col-md-3"><label class="form-label" style="color:#6f42c1;">Category</label>
+          <select name="category" class="form-select">
+            <option value="all">All Categories</option>
+            {% for cat in categories %}<option value="{{cat}}" {% if selected_category==cat %}selected{% endif %}>{{cat}}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2"><button type="submit" class="btn-green w-100" style="background:linear-gradient(135deg,#3a0ca3,#6f42c1);">Filter</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="result-card" style="border-left-color:#6f42c1;background:#f8f4ff;">
+    <strong>📋 Found {{ schemes|length }} scheme(s)</strong>
+    <span style="color:#888;font-size:.85rem;margin-left:1rem;">Click "View Details" for complete info & how to apply</span>
+  </div>
+
+  {% if schemes %}
+    {% for scheme in schemes %}
+    <div class="scheme-card" style="border-top-color:{% if scheme.scheme_type=='central' %}#2d6a4f{% else %}#6f42c1{% endif %};">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <h5 style="color:#3a0ca3;font-family:'Playfair Display',serif;margin-bottom:.3rem;">
+            {% if session.get('language')=='hi' and scheme.name_hi %}{{ scheme.name_hi }}
+            {% elif session.get('language')=='te' and scheme.name_te %}{{ scheme.name_te }}
+            {% else %}{{ scheme.name }}{% endif %}
+          </h5>
+          <span style="font-size:.75rem;padding:3px 10px;border-radius:20px;font-weight:600;{% if scheme.scheme_type=='central' %}background:#cfe2ff;color:#0a58ca;{% else %}background:#e2d9f3;color:#6f42c1;{% endif %}">
+            {% if scheme.scheme_type=='central' %}🏛️ {{ t('central_govt') }}{% else %}🏢 {{ t('state_govt') }} — {{ scheme.state }}{% endif %}
+          </span>
+          <span style="font-size:.75px;padding:3px 10px;border-radius:20px;font-weight:600;background:#e8f5e9;color:#2e7d32;margin-left:5px;font-size:.75rem;">📂 {{ scheme.category }}</span>
+        </div>
+        <div style="font-size:1.8rem;">
+          {% if scheme.category=='Financial Aid' %}💰{% elif scheme.category=='Crop Insurance' %}🛡️{% elif scheme.category=='Loans & Credit' %}💳{% elif scheme.category=='Water & Irrigation' %}💧{% elif scheme.category=='Pension' %}👴{% elif scheme.category=='Market Access' %}🛒{% elif scheme.category=='Organic Farming' %}🌿{% elif scheme.category=='Life Insurance' %}❤️{% else %}📋{% endif %}
+        </div>
+      </div>
+      <p style="color:#555;font-size:.88rem;margin:.5rem 0 1rem;">
+        {% if session.get('language')=='hi' and scheme.description_hi %}{{ scheme.description_hi[:180] }}...
+        {% elif session.get('language')=='te' and scheme.description_te %}{{ scheme.description_te[:180] }}...
+        {% else %}{{ scheme.description[:180] }}...{% endif %}
+      </p>
+      <div class="row g-2 mb-3">
+        <div class="col-md-6"><div style="background:#f0faf4;border-radius:10px;padding:.7rem 1rem;"><strong style="font-size:.78rem;color:#2d6a4f;">💚 {{ t('benefits') }}</strong><p style="margin:0;font-size:.85rem;color:#333;">{{ scheme.benefit }}</p></div></div>
+        <div class="col-md-6"><div style="background:#f4f0ff;border-radius:10px;padding:.7rem 1rem;"><strong style="font-size:.78rem;color:#6f42c1;">✅ {{ t('eligibility') }}</strong><p style="margin:0;font-size:.85rem;color:#333;">{{ scheme.eligibility[:100] }}...</p></div></div>
+      </div>
+      {% if scheme.last_date %}<div style="font-size:.8rem;color:#888;margin-bottom:.8rem;">📅 Last Date: <strong>{{ scheme.last_date }}</strong></div>{% endif %}
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('scheme_detail', scheme_id=scheme.id) }}" class="btn-green" style="text-decoration:none;padding:8px 18px;font-size:.85rem;">{{ t('view_details') }} →</a>
+        {% if scheme.official_link %}<a href="{{ scheme.official_link }}" target="_blank" class="btn btn-outline-secondary" style="border-radius:10px;padding:8px 18px;font-size:.85rem;">{{ t('apply_now') }} ↗</a>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:4rem;color:#888;">
+    <div style="font-size:4rem;">📭</div><h4 style="color:#aaa;">No schemes found</h4>
+    <a href="{{ url_for('schemes') }}" class="btn-green" style="text-decoration:none;padding:10px 24px;display:inline-block;margin-top:1rem;">Show All Schemes</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

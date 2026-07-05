@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+{% block content %}
+{% set lang = session.get('language', 'en') %}
+
+<div class="hero" style="background:linear-gradient(135deg,#0077b6,#00b4d8);border-radius:0 0 30px 30px;">
+  <div class="page-container">
+    <h1>📞 {{ t('help') }}</h1>
+    <p id="heroSubtitle"></p>
+    <button onclick="speak('welcome', this)" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;border-radius:25px;padding:10px 22px;font-size:1rem;cursor:pointer;margin-top:10px;">
+  🔊 <span id="listenBtnTxt"></span>
+</button>
+  </div>
+</div>
+
+<!-- FLOATING MIC -->
+<div style="position:fixed;bottom:30px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+  <div id="voiceLabel" style="background:#2d6a4f;color:white;padding:6px 14px;border-radius:20px;font-size:.8rem;display:none;" id="listeningTxt"></div>
+  <button id="micBtn" onclick="toggleVoiceInput()" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#e63946,#c1121f);border:none;color:white;font-size:1.6rem;cursor:pointer;box-shadow:0 4px 20px rgba(230,57,70,.5);">🎤</button>
+</div>
+
+<div class="page-container" style="padding-top:1rem;">
+  <div class="row g-4">
+
+    <!-- LEFT -->
+    <div class="col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header" style="background:linear-gradient(135deg,#0077b6,#00b4d8);">
+          <h5>✉️ {{ t('contact_us') }}
+            <button onclick="speak('contactUs',this)" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:white;border-radius:20px;padding:2px 10px;font-size:.75rem;cursor:pointer;margin-left:8px;">🔊</button>
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <div style="background:#e8f5e9;border-radius:12px;padding:12px 15px;margin-bottom:1rem;border-left:4px solid #40916c;">
+            <strong style="color:#2d6a4f;font-size:.9rem;" id="voiceTipTitle"></strong><br>
+            <small style="color:#555;" id="voiceTipBody"></small><br>
+            <button onclick="speak('voiceTip',this)" style="background:#2d6a4f;color:white;border:none;border-radius:15px;padding:4px 12px;font-size:.75rem;margin-top:6px;cursor:pointer;">🔊 <span id="listenWord"></span></button>
+          </div>
+          <form method="POST">
+            <div class="mb-3"><label class="form-label">{{ t('your_name') }}</label><input type="text" name="name" class="form-control" value="{{ current_user.name }}" required></div>
+            <div class="mb-3"><label class="form-label">{{ t('your_email') }}</label><input type="email" name="email" class="form-control" value="{{ current_user.email }}" required></div>
+            <div class="mb-3">
+              <label class="form-label">{{ t('subject') }}</label>
+              <select name="subject" class="form-select">
+                <option>Crop Recommendation Query</option>
+                <option>Disease Detection Issue</option>
+                <option>Government Scheme Query</option>
+                <option>Technical Support</option>
+                <option>General Query</option>
+              </select>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">{{ t('your_message') }}
+                <button type="button" onclick="startVoiceForMessage()" style="background:#e63946;color:white;border:none;border-radius:15px;padding:3px 12px;font-size:.78rem;cursor:pointer;margin-left:5px;">🎤 <span id="speakWord"></span></button>
+              </label>
+              <textarea name="message" id="messageBox" class="form-control" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn-green w-100" style="background:linear-gradient(135deg,#0077b6,#00b4d8)!important;font-size:1.1rem;padding:14px;">
+              📨 <span id="sendTxt"></span>
+            </button>
+          </form>
+        </div>
+      </div>
+      <!-- USER MESSAGES & REPLIES -->
+      {% if user_messages %}
+      <div class="card mb-4" style="border-left:4px solid #0077b6;">
+        <div class="card-header" style="background:linear-gradient(135deg,#0077b6,#00b4d8);">
+          <h5 style="margin:0;color:white;">📬 Your Messages & Replies</h5>
+        </div>
+        <div class="card-body p-0">
+          {% for msg in user_messages %}
+          <div style="padding:14px 16px;border-bottom:1px solid #eee;">
+            <!-- User message -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="background:#e3f2fd;color:#0077b6;border-radius:8px;padding:2px 10px;font-size:.75rem;font-weight:600;">{{ msg.subject }}</span>
+              <small style="color:#aaa;">{{ msg.created_at.strftime('%d %b %Y') }}</small>
+            </div>
+            <div style="background:#f5f5f5;border-radius:10px;padding:10px 12px;font-size:.88rem;color:#333;margin-bottom:8px;">
+              <strong>You:</strong> {{ msg.message }}
+            </div>
+            <!-- Admin reply -->
+            {% if msg.reply %}
+            <div style="background:#e8f5e9;border-radius:10px;padding:10px 12px;font-size:.88rem;color:#2d6a4f;border-left:3px solid #40916c;">
+              <strong>🌾 BHUMI Team:</strong> {{ msg.reply }}
+            </div>
+            {% else %}
+            <div style="background:#fff8e1;border-radius:10px;padding:8px 12px;font-size:.82rem;color:#856404;">
+              ⏳ Reply pending — we'll respond within 24 hours
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <h2 class="section-title">📞 <span id="helplineTitleTxt"></span>
+        <button onclick="speak('helplines',this)" style="background:#0077b6;color:white;border:none;border-radius:15px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-left:8px;">🔊</button>
+      </h2>
+      <div id="helplinesList"></div>
+
+      <!-- PICTURE GUIDE -->
+      <div style="background:#fff3cd;border-radius:14px;padding:1rem 1.2rem;margin-top:1rem;border-left:4px solid #e9c46a;">
+        <strong style="color:#856404;">📖 <span id="picGuideTitleTxt"></span></strong>
+        <button onclick="speak('picGuide',this)" style="background:#856404;color:white;border:none;border-radius:15px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-left:6px;">🔊</button>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;text-align:center;" id="picGuideGrid"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: FAQ -->
+    <div class="col-lg-6">
+      <h2 class="section-title">❓ <span id="faqTitleTxt"></span>
+      <button id="readAllBtn" onclick="toggleReadAll(this)" style="background:#0077b6;color:white;border:none;border-radius:15px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-left:8px;">🔊 <span id="readAllTxt"></span></button>  
+      </h2>
+      <div class="accordion" id="faqAccordion"></div>
+
+      <div class="result-card mt-3" style="border-left-color:#40916c;background:#f5faf6;text-align:center;cursor:pointer;" onclick="speak('kisan')">
+        <strong style="color:#2d6a4f;">📞 Kisan Call Center — 🔊 <span id="tapBoxTxt"></span></strong>
+        <div style="font-size:2rem;font-weight:800;color:#2d6a4f;margin:.3rem 0;">1800-180-1551</div>
+        <div style="font-size:.82rem;color:#888;" id="kisanSubTxt"></div>
+      </div>
+
+      <div style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:14px;padding:1.2rem;margin-top:1rem;border:2px solid #a5d6a7;">
+        <strong style="color:#2d6a4f;font-size:.95rem;" id="tipsTitleTxt"></strong>
+        <button onclick="speak('tips',this)" style="background:#2d6a4f;color:white;border:none;border-radius:15px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-left:6px;">🔊</button>
+        <ul style="margin-top:10px;padding-left:18px;font-size:.85rem;color:#555;line-height:2.2;" id="tipsList"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentAudio = null;
+// ── ALL TEXT IN JS — no Jinja rendering issues ──
+const TEXTS = {
+  en: {
+    lang: 'en-IN',
+    welcome: 'Welcome to the Help page. Click any speaker button to listen in English. Click the red microphone button at the bottom right to speak your message.',
+    listenBtn: 'Listen in English',
+    heroSubtitle: 'Get help from agriculture experts. Tap the speaker button to listen.',
+    contactUs: 'Contact us form. Enter your name, email, select a subject, and write or speak your farming problem. Then click Send Message.',
+    voiceTip: 'Cannot type? Click the red microphone button at the bottom right of the screen. Then speak your farming problem. It will automatically type for you.',
+    voiceTipTitle: '🎤 Cannot type? Use your voice!',
+    voiceTipBody: 'Click the red mic button (bottom right). Speak your problem. It types automatically.',
+    helplines: 'Important helpline numbers for farmers. Kisan Call Centre, number 1800 180 1551. Free helpline available 6 AM to 10 PM daily. PM Kisan Helpline, 155261. Weather Helpline, 1800 180 1717. Soil Testing, 1800 180 1551.',
+    helplineTitle: 'Important Helpline Numbers',
+    picGuideTitle: 'Picture Guide',
+    picGuide: 'Picture guide for farmers. Step one: Take a photo of your sick plant or crop. Step two: Go to Disease Detection page and upload the photo. Step three: Get treatment advice automatically.',
+    picSteps: ['Take photo of sick plant', 'Upload in Disease page', 'Get treatment advice'],
+    faqTitle: 'Frequently Asked Questions',
+    readAll: 'Read All',
+    tapBox: 'Tap to hear number',
+    kisanSub: 'Free | 6AM–10PM | All Languages',
+    kisan: 'Kisan Call Center. Phone number: 1800 180 1551. This is a free helpline. Available from 6 in the morning to 10 at night. All languages supported.',
+    tipsTitle: 'Tips for farmers who cannot read or write',
+    tips: 'Tips for farmers who cannot read or write. One: Ask your child or neighbour to help use this app. Two: Use the microphone button to speak your problem. Three: Show your phone camera to sick crops. Four: Call 1800 180 1551 for free help. Five: Show this app to your village agriculture officer.',
+    tipsList: ['👨‍👩‍👧 Ask your child or neighbour to help', '🎤 Use mic button to speak your problem', '📷 Show phone camera to sick crops', '📞 Call 1800-180-1551 for free help', '🏢 Show this app to your agriculture officer'],
+    listenWord: 'Listen',
+    speakWord: 'Speak',
+    sendTxt: 'Send Message',
+    listeningTxt: '🎤 Listening...',
+    msgPlaceholder: 'Describe your query... or click 🎤 Speak',
+    listenAnswer: 'Listen to this answer',
+    faqs: [
+      ['How does soil image analysis work?', 'Our AI system looks at your soil photo and tells you if it is Red Soil, Black Soil, Clay Soil or Alluvial Soil. Then it tells you which crops grow best in that soil, based on your location and season.'],
+      ['How accurate is disease detection?', 'Our disease detection is trained on 54 thousand plant disease photos. It is correct 85 to 95 percent of the time. Always confirm with your local agriculture officer for important decisions.'],
+      ['Can I use the website in Telugu or Hindi?', 'Yes! Click the language buttons at the top of the page. Click EN for English, Hindi button for Hindi, Telugu button for Telugu. Everything on the page will change to your language.'],
+      ['Which soil types are detected?', 'Four types of soil are detected. Red Soil, Black Soil, Clay Soil, and Alluvial Soil. These cover all major farming areas of India.'],
+      ['How to apply for government schemes?', 'Click on any scheme card to see full details, documents required, and how to apply step by step. You can also call 1800 180 1551 for free guidance.'],
+      ['How to download my report?', 'After soil analysis or disease detection is done, you will see a Download PDF Report button. Click it to get your complete report which you can show to agriculture officers.'],
+      ['Is my data safe?', 'Yes. Your data is stored securely. We never share your personal information or farm details with anyone.'],
+      ['What if AI gives wrong results?', 'AI predictions are for guidance only. Always confirm important decisions with your local Krishi Vigyan Kendra or call 1800 180 1551 for free expert advice.']
+    ]
+  },
+  hi: {
+    lang: 'hi-IN',
+    welcome: 'सहायता पृष्ठ पर आपका स्वागत है। किसी भी जानकारी को सुनने के लिए स्पीकर बटन दबाएं। अपना संदेश बोलने के लिए नीचे दाईं ओर लाल माइक्रोफोन बटन दबाएं।',
+    listenBtn: 'हिंदी में सुनें',
+    heroSubtitle: 'कृषि विशेषज्ञों से सहायता पाएं। सुनने के लिए स्पीकर बटन दबाएं।',
+    contactUs: 'संपर्क फॉर्म। अपना नाम, ईमेल दर्ज करें, विषय चुनें और अपनी खेती की समस्या लिखें या बोलें। फिर संदेश भेजें बटन दबाएं।',
+    voiceTip: 'टाइप नहीं कर सकते? स्क्रीन के नीचे दाईं ओर लाल माइक्रोफोन बटन दबाएं। फिर अपनी खेती की समस्या बोलें। यह अपने आप टाइप हो जाएगा।',
+    voiceTipTitle: '🎤 टाइप नहीं कर सकते? आवाज़ उपयोग करें!',
+    voiceTipBody: 'नीचे दाईं ओर लाल माइक बटन दबाएं। समस्या बोलें। अपने आप टाइप होगा।',
+    helplines: 'महत्वपूर्ण हेल्पलाइन नंबर। किसान कॉल सेंटर, नंबर 1800 180 1551। मुफ्त, सुबह 6 से रात 10 बजे तक। पीएम किसान हेल्पलाइन 155261। मौसम हेल्पलाइन 1800 180 1717। मृदा परीक्षण 1800 180 1551।',
+    helplineTitle: 'महत्वपूर्ण हेल्पलाइन नंबर',
+    picGuideTitle: 'चित्र गाइड',
+    picGuide: 'चित्र गाइड। पहला कदम: बीमार पौधे या फसल की फोटो लें। दूसरा कदम: रोग पहचान पृष्ठ पर जाएं और फोटो अपलोड करें। तीसरा कदम: उपचार की सलाह अपने आप मिल जाएगी।',
+    picSteps: ['बीमार पौधे की फोटो लें', 'रोग पृष्ठ पर अपलोड करें', 'उपचार की सलाह पाएं'],
+    faqTitle: 'अक्सर पूछे जाने वाले प्रश्न',
+    readAll: 'सब सुनें',
+    tapBox: 'नंबर सुनने के लिए दबाएं',
+    kisanSub: 'मुफ्त | सुबह 6 - रात 10 | सभी भाषाएं',
+    kisan: 'किसान कॉल सेंटर। फोन नंबर 1800 180 1551। यह मुफ्त हेल्पलाइन है। सुबह 6 बजे से रात 10 बजे तक उपलब्ध। सभी भाषाओं में सहायता मिलती है।',
+    tipsTitle: 'जो किसान पढ़-लिख नहीं सकते उनके लिए सुझाव',
+    tips: 'जो किसान पढ़-लिख नहीं सकते उनके लिए सुझाव। एक: अपने बच्चे या पड़ोसी से मदद लें। दो: माइक्रोफोन बटन से बोलकर संदेश भेजें। तीन: बीमार फसल को फोन कैमरे से दिखाएं। चार: मुफ्त मदद के लिए 1800 180 1551 पर कॉल करें। पांच: गांव के कृषि अधिकारी को यह ऐप दिखाएं।',
+    tipsList: ['👨‍👩‍👧 बच्चे या पड़ोसी से मदद लें', '🎤 माइक बटन से समस्या बोलें', '📷 बीमार फसल को कैमरे से दिखाएं', '📞 1800-180-1551 पर मुफ्त कॉल करें', '🏢 कृषि अधिकारी को यह ऐप दिखाएं'],
+    listenWord: 'सुनें',
+    speakWord: 'बोलें',
+    sendTxt: 'संदेश भेजें',
+    listeningTxt: '🎤 सुन रहा हूं...',
+    msgPlaceholder: 'अपनी समस्या लिखें... या 🎤 बोलें बटन दबाएं',
+    listenAnswer: 'यह उत्तर सुनें',
+    faqs: [
+      ['मिट्टी की तस्वीर विश्लेषण कैसे काम करता है?', 'हमारी AI प्रणाली आपकी मिट्टी की तस्वीर देखती है और बताती है कि यह लाल मिट्टी है, काली मिट्टी है, चिकनी मिट्टी है या जलोढ़ मिट्टी है। फिर आपकी जगह और मौसम के हिसाब से सबसे अच्छी फसलें बताती है।'],
+      ['रोग पहचान कितनी सटीक है?', 'हमारा रोग पहचान मॉडल 54 हजार पौधों की बीमारी की तस्वीरों पर प्रशिक्षित है। 85 से 95 प्रतिशत सटीक है। महत्वपूर्ण निर्णयों के लिए हमेशा स्थानीय कृषि अधिकारी से पुष्टि करें।'],
+      ['क्या मैं तेलुगु या हिंदी में उपयोग कर सकता हूं?', 'हाँ! पृष्ठ के ऊपर EN, Hindi या Telugu बटन दबाएं। पूरा पृष्ठ आपकी भाषा में बदल जाएगा।'],
+      ['कौन सी मिट्टी के प्रकार पहचाने जाते हैं?', 'चार प्रकार की मिट्टी पहचानी जाती है। लाल मिट्टी, काली मिट्टी, चिकनी मिट्टी और जलोढ़ मिट्टी। ये भारत के सभी प्रमुख कृषि क्षेत्रों को कवर करते हैं।'],
+      ['सरकारी योजनाओं के लिए आवेदन कैसे करें?', 'पूरी जानकारी, जरूरी दस्तावेज और आवेदन के चरण देखने के लिए किसी भी योजना पर क्लिक करें। मुफ्त मार्गदर्शन के लिए 1800 180 1551 पर कॉल करें।'],
+      ['रिपोर्ट कैसे डाउनलोड करें?', 'मिट्टी विश्लेषण या रोग पहचान के बाद परिणाम पृष्ठ पर PDF रिपोर्ट डाउनलोड करें बटन दिखेगा। उसे दबाएं और अपनी पूरी रिपोर्ट पाएं।'],
+      ['क्या मेरा डेटा सुरक्षित है?', 'हाँ। आपका डेटा सुरक्षित रूप से संग्रहीत है। हम आपकी व्यक्तिगत जानकारी या खेत का विवरण किसी के साथ साझा नहीं करते।'],
+      ['अगर AI गलत परिणाम दे तो?', 'AI केवल मार्गदर्शन के लिए है। महत्वपूर्ण निर्णय कृषि विज्ञान केंद्र से पुष्टि करें या मुफ्त विशेषज्ञ सलाह के लिए 1800 180 1551 पर कॉल करें।']
+    ]
+  },
+  te: {
+    lang: 'te-IN',
+    welcome: 'సహాయ పేజీకి స్వాగతం. ఏదైనా వినడానికి స్పీకర్ బటన్ నొక్కండి. మీ సమస్య చెప్పడానికి స్క్రీన్ కింద కుడి వైపు ఎర్ర మైక్రోఫోన్ బటన్ నొక్కండి.',
+    listenBtn: 'తెలుగులో వినండి',
+    heroSubtitle: 'వ్యవసాయ నిపుణుల నుండి సహాయం పొందండి. వినడానికి స్పీకర్ బటన్ నొక్కండి.',
+    contactUs: 'సంప్రదింపు ఫారం. మీ పేరు, ఇమెయిల్ నమోదు చేయండి, విషయం ఎంచుకోండి, మీ వ్యవసాయ సమస్య రాయండి లేదా చెప్పండి. తర్వాత సందేశం పంపండి బటన్ నొక్కండి.',
+    voiceTip: 'టైప్ చేయలేరా? స్క్రీన్ కింద కుడి వైపు ఎర్ర మైక్రోఫోన్ బటన్ నొక్కండి. తర్వాత మీ వ్యవసాయ సమస్య చెప్పండి. అది స్వయంచాలకంగా టైప్ అవుతుంది.',
+    voiceTipTitle: '🎤 టైప్ చేయలేరా? గొంతు వాడండి!',
+    voiceTipBody: 'కింద కుడి వైపు ఎర్ర మైక్ బటన్ నొక్కండి. సమస్య చెప్పండి. స్వయంగా టైప్ అవుతుంది.',
+    helplines: 'ముఖ్యమైన హెల్ప్ లైన్ నంబర్లు. కిసాన్ కాల్ సెంటర్, నంబర్ 1800 180 1551. ఉచితం, ఉదయం 6 నుండి రాత్రి 10 వరకు. పిఎం కిసాన్ హెల్ప్ లైన్ 155261. వాతావరణ హెల్ప్ లైన్ 1800 180 1717. మట్టి పరీక్ష 1800 180 1551.',
+    helplineTitle: 'ముఖ్యమైన హెల్ప్‌లైన్ నంబర్లు',
+    picGuideTitle: 'చిత్ర గైడ్',
+    picGuide: 'చిత్ర గైడ్. మొదటి దశ: జబ్బు పడిన మొక్క లేదా పంట ఫోటో తీయండి. రెండవ దశ: వ్యాధి నిర్ధారణ పేజీకి వెళ్ళి ఫోటో అప్లోడ్ చేయండి. మూడవ దశ: చికిత్స సలహా స్వయంచాలకంగా వస్తుంది.',
+    picSteps: ['జబ్బు మొక్క ఫోటో తీయండి', 'వ్యాధి పేజీలో అప్లోడ్ చేయండి', 'చికిత్స సలహా పొందండి'],
+    faqTitle: 'తరచుగా అడిగే ప్రశ్నలు',
+    readAll: 'అన్నీ వినండి',
+    tapBox: 'నంబర్ వినడానికి నొక్కండి',
+    kisanSub: 'ఉచితం | ఉదయం 6 - రాత్రి 10 | అన్ని భాషలు',
+    kisan: 'కిసాన్ కాల్ సెంటర్. ఫోన్ నంబర్ 1800 180 1551. ఇది ఉచిత హెల్ప్ లైన్. ఉదయం 6 గంటల నుండి రాత్రి 10 గంటల వరకు అందుబాటులో ఉంటుంది. అన్ని భాషలలో సహాయం లభిస్తుంది.',
+    tipsTitle: 'చదవలేని రైతులకు సూచనలు',
+    tips: 'చదవలేని రైతులకు సూచనలు. ఒకటి: మీ పిల్లలు లేదా పొరుగువారిని సహాయం అడగండి. రెండు: మైక్రోఫోన్ బటన్ నొక్కి మీ సమస్య చెప్పండి. మూడు: జబ్బు పడిన పంటకు ఫోన్ కెమెరా చూపించండి. నాలుగు: ఉచిత సహాయానికి 1800 180 1551 కి కాల్ చేయండి. అయిదు: మీ గ్రామ వ్యవసాయ అధికారికి ఈ యాప్ చూపించండి.',
+    tipsList: ['👨‍👩‍👧 పిల్లలు లేదా పొరుగు సహాయం తీసుకోండి', '🎤 మైక్ బటన్ నొక్కి సమస్య చెప్పండి', '📷 జబ్బు పంటకు కెమెరా చూపించండి', '📞 1800-180-1551 కి ఉచిత కాల్ చేయండి', '🏢 వ్యవసాయ అధికారికి ఈ యాప్ చూపించండి'],
+    listenWord: 'వినండి',
+    speakWord: 'మాట్లాడండి',
+    sendTxt: 'సందేశం పంపండి',
+    listeningTxt: '🎤 వింటున్నాను...',
+    msgPlaceholder: 'మీ సమస్య రాయండి... లేదా 🎤 బటన్ నొక్కి చెప్పండి',
+    listenAnswer: 'ఈ సమాధానం వినండి',
+    faqs: [
+      ['మట్టి చిత్ర విశ్లేషణ ఎలా పని చేస్తుంది?', 'మా AI వ్యవస్థ మీ మట్టి ఫోటో చూసి అది ఎర్ర మట్టి అా, నల్ల మట్టి అా, బంక మట్టి అా లేదా ఒండ్రు మట్టి అా అని చెప్తుంది. తర్వాత మీ స్థానం మరియు సీజన్ ఆధారంగా అత్యుత్తమ పంటలు సూచిస్తుంది.'],
+      ['వ్యాధి నిర్ధారణ ఎంత ఖచ్చితమైనది?', 'మా వ్యాధి నిర్ధారణ 54 వేల మొక్కల వ్యాధి ఫోటోలపై శిక్షణ పొందింది. 85 నుండి 95 శాతం ఖచ్చితంగా ఉంటుంది. ముఖ్యమైన నిర్ణయాలకు స్థానిక వ్యవసాయ అధికారితో ధృవీకరించండి.'],
+      ['తెలుగు లేదా హిందీలో వాడవచ్చా?', 'అవును! పేజీ పైభాగంలో EN, హిందీ లేదా తెలుగు బటన్ నొక్కండి. పేజీలోని అన్నీ మీ భాషకు మారతాయి.'],
+      ['ఏ మట్టి రకాలు గుర్తించబడతాయి?', 'నాలుగు రకాల మట్టి గుర్తించబడతాయి. ఎర్ర మట్టి, నల్ల మట్టి, బంక మట్టి మరియు ఒండ్రు మట్టి. ఇవి భారతదేశంలోని అన్ని ప్రధాన వ్యవసాయ ప్రాంతాలను కవర్ చేస్తాయి.'],
+      ['ప్రభుత్వ పథకాలకు దరఖాస్తు చేయడం ఎలా?', 'పూర్తి వివరాలు, అవసరమైన పత్రాలు మరియు దరఖాస్తు దశలు చూడడానికి ఏదైనా పథకంపై క్లిక్ చేయండి. ఉచిత మార్గదర్శకత్వానికి 1800 180 1551 కి కాల్ చేయండి.'],
+      ['నా నివేదిక ఎలా డౌన్‌లోడ్ చేయాలి?', 'మట్టి విశ్లేషణ లేదా వ్యాధి నిర్ధారణ తర్వాత ఫలితాల పేజీలో PDF నివేదిక డౌన్‌లోడ్ చేయండి బటన్ కనిపిస్తుంది. దాన్ని నొక్కి పూర్తి నివేదిక పొందండి.'],
+      ['నా డేటా సురక్షితంగా ఉంటుందా?', 'అవును. మీ డేటా సురక్షితంగా నిల్వ చేయబడింది. మేము మీ వ్యక్తిగత సమాచారం లేదా పొలం వివరాలను ఎవరితోనూ పంచుకోము.'],
+      ['AI తప్పు ఫలితాలు ఇస్తే?', 'AI కేవలం మార్గదర్శకత్వం కోసం. ముఖ్యమైన నిర్ణయాలు కృషి విజ్ఞాన కేంద్రంతో ధృవీకరించండి లేదా ఉచిత నిపుణుల సలహాకు 1800 180 1551 కి కాల్ చేయండి.']
+    ]
+  }
+};
+
+// Pick language from Flask session
+const LANG = '{{ lang }}';
+const T = TEXTS[LANG] || TEXTS['en'];
+
+// ── Render all text from JS ──
+document.getElementById('heroSubtitle').textContent = T.heroSubtitle;
+document.getElementById('listenBtnTxt').textContent = T.listenBtn;
+document.getElementById('voiceTipTitle').textContent = T.voiceTipTitle;
+document.getElementById('voiceTipBody').textContent = T.voiceTipBody;
+document.getElementById('listenWord').textContent = T.listenWord;
+document.getElementById('speakWord').textContent = T.speakWord;
+document.getElementById('sendTxt').textContent = T.sendTxt;
+document.getElementById('voiceLabel').textContent = T.listeningTxt;
+document.getElementById('helplineTitleTxt').textContent = T.helplineTitle;
+document.getElementById('picGuideTitleTxt').textContent = T.picGuideTitle;
+document.getElementById('faqTitleTxt').textContent = T.faqTitle;
+document.getElementById('readAllTxt').textContent = T.readAll;
+document.getElementById('tapBoxTxt').textContent = T.tapBox;
+document.getElementById('kisanSubTxt').textContent = T.kisanSub;
+document.getElementById('tipsTitleTxt').textContent = T.tipsTitle;
+const msgBox = document.getElementById('messageBox'); if(msgBox) msgBox.placeholder = T.msgPlaceholder;
+
+// Helplines
+const helplines = [
+  ['Kisan Call Centre','1800-180-1551','Free | 6AM–10PM daily'],
+  ['PM Kisan Helpline','155261','PM Kisan scheme queries'],
+  ['Weather Helpline','1800-180-1717','IMD weather forecast'],
+  ['Soil Testing','1800-180-1551','Soil Health Card queries']
+];
+const hList = document.getElementById('helplinesList');
+helplines.forEach(([name,num,desc]) => {
+  hList.innerHTML += `<div class="crop-item mb-2" style="cursor:pointer;" onclick="speak('helplines')">
+    <div><strong style="color:#0077b6;">${name}</strong><br><small style="color:#888;">${desc} — 🔊 ${T.tapBox}</small></div>
+    <div style="font-weight:700;color:#0077b6;font-size:1.1rem;">${num}</div>
+  </div>`;
+});
+
+// Picture guide
+const emojis = ['📸','⬆️','💊'];
+const pg = document.getElementById('picGuideGrid');
+T.picSteps.forEach((step, i) => {
+  pg.innerHTML += `<div style="background:white;border-radius:10px;padding:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);text-align:center;">
+    <div style="font-size:2.5rem;">${emojis[i]}</div>
+    <div style="font-size:.75rem;color:#555;margin-top:4px;">${step}</div>
+  </div>`;
+});
+
+// Tips list
+const tl = document.getElementById('tipsList');
+T.tipsList.forEach(tip => { tl.innerHTML += `<li>${tip}</li>`; });
+
+// FAQ accordion
+const acc = document.getElementById('faqAccordion');
+T.faqs.forEach(([q, a], i) => {
+acc.innerHTML += `
+  <div class="accordion-item" style="border:none;border-radius:12px;margin-bottom:.5rem;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.06);">
+    <h2 class="accordion-header" style="display:flex;align-items:center;">
+      <button class="accordion-button ${i > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#faq${i}" style="font-weight:600;font-size:.9rem;color:#0077b6;">
+        ${q}
+      </button>
+      <button type="button" id="faqBtn${i}h" onclick="toggleFaqSpeak(${i}, this)" style="background:#0077b6;color:white;border:none;border-radius:50%;width:32px;height:32px;font-size:.9rem;cursor:pointer;flex-shrink:0;margin-right:8px;">🔊</button>
+    </h2>
+    <div id="faq${i}" class="accordion-collapse collapse ${i === 0 ? 'show' : ''}" data-bs-parent="#faqAccordion">
+      <div class="accordion-body" style="font-size:.88rem;color:#555;background:#f0f7ff;">
+        ${a}
+        <br><button type="button" id="faqBtn${i}b" onclick="toggleFaqSpeak(${i}, this)" style="background:#0077b6;color:white;border:none;border-radius:15px;padding:4px 12px;font-size:.75rem;cursor:pointer;margin-top:8px;">🔊 ${T.listenAnswer}</button>
+      </div>
+    </div>
+  </div>`;
+});
+
+// ── SPEAK FUNCTIONS ──
+// Uses Flask /api/tts route (gTTS) — works for Telugu/Hindi on ALL devices
+
+function speakText(text) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  const url = '/api/tts?lang=' + LANG + '&text=' + encodeURIComponent(text.slice(0, 500));
+  console.log('TTS URL:', url);
+  currentAudio = new Audio(url);
+  currentAudio.addEventListener('canplaythrough', () => {
+    currentAudio.play().catch(err => console.error('Play error:', err));
+  });
+  currentAudio.addEventListener('error', (e) => {
+    console.error('Audio error:', e);
+    // fallback
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = T.lang;
+    u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  });
+  currentAudio.onended = () => { currentAudio = null; };
+  currentAudio.load();
+}
+
+function speak(key, btn) {
+  if(currentAudio && !currentAudio.paused){
+    currentAudio.pause();
+    currentAudio = null;
+    if(btn) btn.innerText = '🔊';
+    return;
+  }
+  if(btn) btn.innerText = '⏹';
+  speakText(T[key] || key);
+  if(currentAudio){
+    currentAudio.onended = () => { if(btn) btn.innerText = '🔊'; };
+  }
+}
+
+function readAllFAQs() {
+  let text = T.faqTitle + '. ';
+  T.faqs.forEach(([q, a], i) => { text += `${i+1}. ${q}. ${a}. `; });
+  speakText(text);
+}
+function toggleFaqSpeak(i, btn) {
+  if(currentAudio && !currentAudio.paused){
+    currentAudio.pause();
+    currentAudio = null;
+    // reset all FAQ buttons
+    document.querySelectorAll('[id^="faqBtn"]').forEach(b => {
+      b.innerHTML = b.id.endsWith('b') ? '🔊 ' + T.listenAnswer : '🔊';
+    });
+    return;
+  }
+  // reset all first
+  document.querySelectorAll('[id^="faqBtn"]').forEach(b => {
+    b.innerHTML = b.id.endsWith('b') ? '🔊 ' + T.listenAnswer : '🔊';
+  });
+  btn.innerHTML = btn.id.endsWith('b') ? '⏹ ' + T.listenAnswer : '⏹';
+  const text = T.faqs[i][1];
+  speakText(text);
+  if(currentAudio){
+    currentAudio.onended = () => {
+      btn.innerHTML = btn.id.endsWith('b') ? '🔊 ' + T.listenAnswer : '🔊';
+    };
+  }
+}
+
+function toggleReadAll(btn) {
+  if(currentAudio && !currentAudio.paused){
+    currentAudio.pause();
+    currentAudio = null;
+    btn.innerHTML = '🔊 <span>' + T.readAll + '</span>';
+    return;
+  }
+  btn.innerHTML = '⏹ <span>' + T.readAll + '</span>';
+  readAllFAQs();
+  if(currentAudio){
+    currentAudio.onended = () => {
+      btn.innerHTML = '🔊 <span>' + T.readAll + '</span>';
+    };
+  }
+}
+
+// ── VOICE INPUT ──
+let recognition = null, isListening = false;
+
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert('Voice input not supported on this browser.\nPlease open in Google Chrome for microphone to work.');
+    return null;
+  }
+  const r = new SR();
+  r.lang = T.lang;
+  r.onresult = (e) => {
+    const txt = e.results[0][0].transcript;
+    const box = document.getElementById('messageBox');
+    box.value += (box.value ? ' ' : '') + txt;
+    stopListening();
+  };
+  r.onerror = () => stopListening();
+  r.onend = () => stopListening();
+  return r;
+}
+
+function startVoiceForMessage() { startListening(); }
+function toggleVoiceInput() { isListening ? stopListening() : startListening(); }
+
+function startListening() {
+  recognition = initRecognition();
+  if (!recognition) return;
+  recognition.start(); isListening = true;
+  document.getElementById('micBtn').style.background = 'linear-gradient(135deg,#40916c,#2d6a4f)';
+  document.getElementById('micBtn').innerText = '⏹';
+  document.getElementById('voiceLabel').style.display = 'block';
+}
+
+function stopListening() {
+  try { if (recognition) recognition.stop(); } catch(e){}
+  isListening = false;
+  document.getElementById('micBtn').style.background = 'linear-gradient(135deg,#e63946,#c1121f)';
+  document.getElementById('micBtn').innerText = '🎤';
+  document.getElementById('voiceLabel').style.display = 'none';
+}
+</script>
+{% endblock %}
